@@ -59,3 +59,15 @@ BEGIN
     RETURN id;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION encoderEntreprise(nomEntreprise VARCHAR(50), adresseEntreprise VARCHAR(100),  emailEntreprise VARCHAR(100), identifiantEntreprise VARCHAR(3), mdpEntreprise VARCHAR(100)) RETURNS VARCHAR(3) AS $$
+DECLARE
+
+BEGIN
+    IF EXISTS(SELECT * FROM projet.entreprises e WHERE e.email = emailEntreprise)THEN
+        RAISE 'email déjà utilisé';
+    END IF;
+    INSERT INTO projet.entreprises (identifiant_entreprise, nom, adresse, mdp, email) VALUES (identifiantEntreprise, nomEntreprise, adresseEntreprise, emailEntreprise, mdpEntreprise);
+    RETURN identifiantEntreprise;
+END;
+$$ LANGUAGE plpgsql;
