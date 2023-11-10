@@ -135,3 +135,15 @@ CREATE OR REPLACE FUNCTION afficherEtudiantsSansStage() RETURNS SETOF RECORD AS 
         END LOOP;
     END;
     $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION afficherOffresAttribuees() RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+    BEGIN
+        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'attribuée' LOOP
+            SELECT offre.code_offre_stage, en.nom, et.nom, et.prenom FROM projet.entreprises en, projet.etudiants et INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+    END;
+    $$ LANGUAGE plpgsql;
