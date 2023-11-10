@@ -3,9 +3,9 @@ CREATE SCHEMA projet;
 
 CREATE TABLE projet.etudiants(
     id_etudiant SERIAL PRIMARY KEY ,
-    nom VARCHAR(50) NOT NULL ,
-    prenom VARCHAR(50) NOT NULL ,
-    email VARCHAR(100) NOT NULL UNIQUE ,
+    nom VARCHAR(50) NOT NULL CHECK ( nom != '' ),
+    prenom VARCHAR(50) NOT NULL CHECK ( prenom != '' ),
+    email VARCHAR(100) NOT NULL UNIQUE CHECK ( email != '' AND email LIKE '%@student.vinci.be' ),
     semestre VARCHAR(2) CHECK ( semestre IN ('Q1', 'Q2') ),
     mdp VARCHAR(100) NOT NULL ,
     nb_candidatures_attente INTEGER NOT NULL DEFAULT 0
@@ -47,3 +47,15 @@ CREATE TABLE projet.candidatures(
     id_etudiant INTEGER REFERENCES projet.etudiants(id_etudiant),
     PRIMARY KEY (id_offre_stage, id_etudiant)
 );
+
+CREATE OR REPLACE FUNCTION encoderEtudiant(nomEtudiant VARCHAR(50), prenomEtudiant VARCHAR(50), emailEtudiant VARCHAR(100), semestreEtudiant VARCHAR(2), mdpEtudiant VARCHAR(100)) RETURNS INTEGER AS $$
+DECLARE
+    id INTEGER := 0;
+BEGIN
+    IF EXISTS(SELECT * FROM projet.etudiants e WHERE e.email = emailEtudiant)THEN
+        RAISE 'email déjà utilisé';
+    END IF;
+    INSERT INTO projet.etudiants (nom, prenom, email, semestre, mdp) VALUES (nomEtudiant, prenomEtudiant, emailEtudiant, semestreEtudiant, mdpEtudiant) RETURNING id_etudiant INTO id;
+    RETURN id;
+END;
+$$ LANGUAGE plpgsql;
