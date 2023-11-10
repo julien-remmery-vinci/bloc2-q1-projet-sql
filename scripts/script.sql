@@ -111,3 +111,15 @@ CREATE OR REPLACE FUNCTION validerOffre(code VARCHAR(20)) RETURNS BOOLEAN AS $$
         RETURN TRUE;
     END;
     $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION afficherOffresValidees() RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+    BEGIN
+        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' LOOP
+            SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+    END;
+    $$ LANGUAGE plpgsql;
