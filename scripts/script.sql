@@ -95,3 +95,19 @@ CREATE OR REPLACE FUNCTION afficherOffresNonValidees() RETURNS SETOF RECORD AS $
         END LOOP;
     END;
     $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION validerOffre(code VARCHAR(20)) RETURNS BOOLEAN AS $$
+    DECLARE
+        offre RECORD;
+    BEGIN
+        IF NOT EXISTS(SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code) THEN
+            RAISE 'aucune offre éxistante avec ce code';
+        END IF;
+        SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code INTO offre;
+        IF offre.etat != 'non validée' THEN
+            RAISE 'l offre entrée doit être non validée';
+        END IF;
+        offre.etat = 'validée';
+        RETURN TRUE;
+    END;
+    $$ LANGUAGE plpgsql;
