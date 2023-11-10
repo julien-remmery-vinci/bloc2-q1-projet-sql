@@ -123,3 +123,15 @@ CREATE OR REPLACE FUNCTION afficherOffresValidees() RETURNS SETOF RECORD AS $$
         END LOOP;
     END;
     $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION afficherEtudiantsSansStage() RETURNS SETOF RECORD AS $$
+    DECLARE
+        etudiant RECORD;
+        sortie RECORD;
+    BEGIN
+        FOR etudiant IN SELECT * FROM projet.etudiants WHERE NOT EXISTS(SELECT * FROM projet.etudiants e, projet.candidatures c WHERE e.id_etudiant = c.id_etudiant AND c.etat = 'validée') LOOP
+            SELECT etudiant.nom, etudiant.prenom, etudiant.email, etudiant.semestre, etudiant.nb_candidatures_attente INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+    END;
+    $$ LANGUAGE plpgsql;
