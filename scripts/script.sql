@@ -12,7 +12,7 @@ CREATE TABLE projet.etudiants(
 );
 
 CREATE TABLE projet.entreprises(
-    identifiant VARCHAR(3) PRIMARY KEY ,
+    identifiant_entreprise VARCHAR(3) PRIMARY KEY ,
     nom VARCHAR(50) NOT NULL ,
     adresse VARCHAR(100) NOT NULL ,
     mdp VARCHAR(100) NOT NULL ,
@@ -29,8 +29,8 @@ CREATE TABLE projet.offres_de_stages(
     etat VARCHAR(11) NOT NULL CHECK ( etat IN ('non validée', 'validée', 'attribuée', 'annulée') ) ,
     semestre VARCHAR(2) NOT NULL CHECK ( semestre IN ('Q1', 'Q2') ) ,
     description VARCHAR(100) NOT NULL ,
-    id_entreprise INTEGER REFERENCES projet.entreprises(identifiant)  NOT NULL ,
-    code_offre_stage VARCHAR(20) NOT NULL UNIQUE DEFAULT projet.entreprises.identifiant+id_offre_stage,
+    identifiant_entreprise VARCHAR(3) REFERENCES projet.entreprises(identifiant_entreprise)  NOT NULL ,
+    code_offre_stage VARCHAR(20) NOT NULL UNIQUE,
     nb_candidatures_attente INTEGER NOT NULL DEFAULT 0
 );
 
@@ -84,3 +84,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION afficherOffresNonValidees() RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+    BEGIN
+        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'non validée' LOOP
+            SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+    END;
+    $$ LANGUAGE plpgsql;
