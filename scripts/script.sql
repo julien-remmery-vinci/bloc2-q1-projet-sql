@@ -71,3 +71,16 @@ BEGIN
     RETURN identifiantEntreprise;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION encoderMotcle(nouveauMotcle VARCHAR(20)) RETURNS VARCHAR(3) AS $$
+DECLARE
+    id INTEGER := 0;
+BEGIN
+    IF EXISTS(SELECT * FROM projet.mots_cles mc WHERE mc.mot_cle = nouveauMotcle)THEN
+        RAISE 'mot clé déjà éxistant';
+    END IF;
+    INSERT INTO projet.mots_cles (mot_cle) VALUES (nouveauMotcle) RETURNING id_mot_cle INTO id;
+    RETURN id;
+END;
+$$ LANGUAGE plpgsql;
+
