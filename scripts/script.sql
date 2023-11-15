@@ -111,7 +111,7 @@ CREATE OR REPLACE FUNCTION projet.validerOffre(code VARCHAR(20)) RETURNS BOOLEAN
         IF offre.etat != 'non validée' THEN
             RAISE 'l offre entrée doit être non validée';
         END IF;
-        UPDATE offres_de_stages SET etat = 'validée' WHERE id_offre_stage = offre.id_offre_stage;
+        UPDATE projet.offres_de_stages SET etat = 'validée' WHERE id_offre_stage = offre.id_offre_stage;
         RETURN TRUE;
     END;
     $$ LANGUAGE plpgsql;
