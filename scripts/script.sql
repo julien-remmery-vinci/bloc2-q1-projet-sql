@@ -49,6 +49,22 @@ CREATE TABLE projet.candidatures(
     PRIMARY KEY (id_offre_stage, id_etudiant)
 );
 
+--TRIGGER ENTREPRISE
+CREATE OR REPLACE FUNCTION projet.ajouterCodeOffre() RETURNS TRIGGER AS $$
+DECLARE
+    nb_offres varchar(20):='';
+BEGIN
+    SELECT cast(e.nb_offres_stages + 1 as varchar(20)) FROM projet.entreprises e INTO nb_offres;
+        new.code_offre_stage = new.identifiant_entreprise || nb_offres;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER code_offre_trigger BEFORE INSERT ON projet.offres_de_stages FOR EACH ROW
+EXECUTE PROCEDURE projet.ajouterCodeOffre();
+
+--PARTIE PROFESSEUR
 CREATE OR REPLACE FUNCTION projet.encoderEtudiant(nomEtudiant VARCHAR(50), prenomEtudiant VARCHAR(50), emailEtudiant VARCHAR(100), semestreEtudiant VARCHAR(2), mdpEtudiant VARCHAR(100)) RETURNS INTEGER AS $$
 DECLARE
     id INTEGER := 0;
@@ -80,9 +96,6 @@ CREATE OR REPLACE FUNCTION projet.encoderMotcle(nouveauMotcle VARCHAR(20)) RETUR
 DECLARE
     id INTEGER := 0;
 BEGIN
-    IF EXISTS(SELECT * FROM projet.mots_cles mc WHERE mc.mot_cle = nouveauMotcle)THEN
-        RAISE 'mot clé déjà éxistant';
-    END IF;
     INSERT INTO projet.mots_cles (mot_cle) VALUES (nouveauMotcle) RETURNING id_mot_cle INTO id;
     RETURN id;
 END;
@@ -116,18 +129,6 @@ CREATE OR REPLACE FUNCTION projet.validerOffre(code VARCHAR(20)) RETURNS BOOLEAN
     END;
     $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION projet.afficherOffresValidees() RETURNS SETOF RECORD AS $$
-    DECLARE
-        offre RECORD;
-        sortie RECORD;
-    BEGIN
-        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' LOOP
-            SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e INTO sortie;
-            RETURN NEXT sortie;
-        END LOOP;
-    END;
-    $$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION projet.afficherEtudiantsSansStage() RETURNS SETOF RECORD AS $$
     DECLARE
         etudiant RECORD;
@@ -154,6 +155,7 @@ CREATE OR REPLACE FUNCTION projet.afficherOffresAttribuees() RETURNS SETOF RECOR
     END;
     $$ LANGUAGE plpgsql;
 
+--PARTIE ENTREPRISE
 CREATE OR REPLACE FUNCTION projet.encoderOffreDeStage(_description VARCHAR(100), _semestre VARCHAR(2), _id_entreprise VARCHAR(3)) RETURNS INTEGER AS $$
 DECLARE
     id INTEGER := 0;
@@ -164,18 +166,53 @@ BEGIN
         THEN
         RAISE foreign_key_violation;
     END IF;
-    INSERT INTO projet.offres_de_stages (semestre,description,identifiant_entreprise,code_offre_stage) VALUES (_semestre,_description,_id_entreprise,'W2G1')
+    INSERT INTO projet.offres_de_stages (semestre,description,identifiant_entreprise) VALUES (_semestre,_description,_id_entreprise)
         RETURNING id_offre_stage into id;
     return id;
 END;
 $$ LANGUAGE plpgsql;
 
+--PARTIE ETUDIANT
+
+CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(idEtudiant INTEGER) RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+        mots_cle VARCHAR(60);
+        mot RECORD;
+        etudiant RECORD;
+        sep VARCHAR;
+    BEGIN
+        if not exists(SELECT * FROM projet.etudiants e WHERE e.id_etudiant = idEtudiant)THEN
+            RAISE 'etudiant existe pas';
+            END IF;
+        SELECT * FROM projet.etudiants e WHERE e.id_etudiant = idEtudiant INTO etudiant;
+        for offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' AND os.semestre = etudiant.semestre LOOP
+            for mot IN SELECT m.mot_cle FROM projet.mots_cles m, projet.mot_cle_stage cs,projet.offres_de_stages os WHERE cs.id_offre_stage = os.id_offre_stage AND m.id_mot_cle = cs.id_mot_cle LOOP
+                sep := ', ';
+                mots_cle := mots_cle || sep || mot;
+            end loop;
+            SELECT offre.code_offre_stage os,e.nom,e.adresse,offre.description,mots_cle
+            FROM projet.entreprises e WHERE offre.identifiant_entreprise = e.identifiant_entreprise INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+        return;
+    END;
+    $$ LANGUAGE plpgsql;
+
 SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test');
 SELECT projet.encoderEntreprise('where2go', 'Rue des champions 1, Bruxelles', 'test@gmail.com', 'W2G', 'test');
 SELECT projet.encoderMotcle('Web');
+SELECT projet.encoderMotcle('Java');
+SELECT projet.encoderMotcle('JavaScript');
 SELECT projet.encoderOffreDeStage('Stage observation', 'Q1', 'W2G');
+INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 1);
+INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 1);
+INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (3, 1);
 SELECT os.code_offre_stage, os.semestre, e.nom, os.description FROM projet.offres_de_stages os, projet.entreprises e WHERE os.identifiant_entreprise = e.identifiant_entreprise AND os.etat = 'non validée';
 SELECT projet.valideroffre('W2G1');
-SELECT projet.afficherOffresValidees();
---SELECT projet.afficherEtudiantsSansStage();
+SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e, projet.offres_de_stages offre WHERE offre.etat = 'validée';
+--REFAIRE SANS PROCEDURE
+--SELECT * FROM projet.afficherEtudiantsSansStage();
 SELECT projet.afficherOffresAttribuees();
+SELECT * FROM projet.afficherOffresStage(1) AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
