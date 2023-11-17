@@ -164,19 +164,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 --PARTIE ETUDIANT
-
 CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(semestreEtudiant VARCHAR(2)) RETURNS SETOF RECORD AS $$
     DECLARE
         offre RECORD;
         sortie RECORD;
-        mots_cle VARCHAR(60);
+        mots_cle VARCHAR(60) := '';
         mot RECORD;
         sep VARCHAR;
     BEGIN
         for offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' AND os.semestre = semestreEtudiant LOOP
             for mot IN SELECT * FROM projet.mots_cles m, projet.mot_cle_stage cs,projet.offres_de_stages os WHERE cs.id_offre_stage = os.id_offre_stage AND m.id_mot_cle = cs.id_mot_cle LOOP
+                IF mots_cle = '' THEN
+                    mots_cle := mot.mot_cle;
+                ELSE
                 sep := ', ';
                 mots_cle := mots_cle || sep || mot.mot_cle;
+                end if;
             end loop;
             SELECT offre.code_offre_stage os,e.nom,e.adresse,offre.description,mots_cle
             FROM projet.entreprises e WHERE offre.identifiant_entreprise = e.identifiant_entreprise INTO sortie;
@@ -186,19 +189,30 @@ CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(semestreEtudiant VARCHAR(
     END;
     $$ LANGUAGE plpgsql;
 
+--PROFESSEUR 1. Encoder un étudiant
 SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test');
+--PROFESSEUR 2. Encoder une entreprise
 SELECT projet.encoderEntreprise('where2go', 'Rue des champions 1, Bruxelles', 'test@gmail.com', 'W2G', 'test');
+--PROFESSEUR 3. Encoder un mot-clé que les entreprises pourront utiliser pour décrire leur stage
 SELECT projet.encoderMotcle('Web');
 SELECT projet.encoderMotcle('Java');
 SELECT projet.encoderMotcle('JavaScript');
+--ENTREPRISE 1. Encoder une offre de stage
 SELECT projet.encoderOffreDeStage('Stage observation', 'Q1', 'W2G');
+--INSERT TEST LIEN MOTS CLES STAGE
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 1);
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 1);
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (3, 1);
+--PROFESSEUR 4. Voir les offres de stage dans l’état « non validée »
 SELECT os.code_offre_stage, os.semestre, e.nom, os.description FROM projet.offres_de_stages os, projet.entreprises e WHERE os.identifiant_entreprise = e.identifiant_entreprise AND os.etat = 'non validée';
+--PROFESSEUR 5. Valider une offre de stage en donnant son code
 SELECT projet.valideroffre('W2G1');
+--PROFESSEUR 6. Voir les offres de stage dans l’état « validée »
 SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e, projet.offres_de_stages offre WHERE offre.etat = 'validée';
---REFAIRE SANS PROCEDURE
---SELECT * FROM projet.afficherEtudiantsSansStage();
+--PROFESSEUR 7. Voir les étudiants qui n’ont pas de stage (pas de candidature à l’état « acceptée »).
+SELECT e.nom, e.prenom, e.email, e.semestre, e.nb_candidatures_attente FROM projet.etudiants e
+WHERE NOT EXISTS(SELECT * FROM projet.candidatures c WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée');
+--PROFESSEUR 8. Voir les offres de stage dans l’état « attribuée »
 SELECT projet.afficherOffresAttribuees();
-SELECT * FROM projet.afficherOffresStage(1) AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
+--ETUDIANT 1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage
+SELECT * FROM projet.afficherOffresStage('Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
