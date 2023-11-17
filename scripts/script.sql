@@ -69,9 +69,6 @@ CREATE OR REPLACE FUNCTION projet.encoderEtudiant(nomEtudiant VARCHAR(50), preno
 DECLARE
     id INTEGER := 0;
 BEGIN
-    IF EXISTS(SELECT * FROM projet.etudiants e WHERE e.email = emailEtudiant)THEN
-        RAISE 'email déjà utilisé';
-    END IF;
     INSERT INTO projet.etudiants (nom, prenom, email, semestre, mdp) VALUES (nomEtudiant, prenomEtudiant, emailEtudiant, semestreEtudiant, mdpEtudiant) RETURNING id_etudiant INTO id;
     RETURN id;
 END;
@@ -81,12 +78,6 @@ CREATE OR REPLACE FUNCTION projet.encoderEntreprise(nomEntreprise VARCHAR(50), a
 DECLARE
 
 BEGIN
-    IF EXISTS(SELECT * FROM projet.entreprises e WHERE e.identifiant_entreprise = identifiantEntreprise)THEN
-        RAISE 'identifiant déjà éxistant';
-    END IF;
-    IF EXISTS(SELECT * FROM projet.entreprises e WHERE e.email = emailEntreprise)THEN
-        RAISE 'email déjà utilisé';
-    END IF;
     INSERT INTO projet.entreprises (identifiant_entreprise, nom, adresse, mdp, email) VALUES (identifiantEntreprise, nomEntreprise, adresseEntreprise, emailEntreprise, mdpEntreprise);
     RETURN identifiantEntreprise;
 END;
@@ -174,23 +165,18 @@ $$ LANGUAGE plpgsql;
 
 --PARTIE ETUDIANT
 
-CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(idEtudiant INTEGER) RETURNS SETOF RECORD AS $$
+CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(semestreEtudiant VARCHAR(2)) RETURNS SETOF RECORD AS $$
     DECLARE
         offre RECORD;
         sortie RECORD;
         mots_cle VARCHAR(60);
         mot RECORD;
-        etudiant RECORD;
         sep VARCHAR;
     BEGIN
-        if not exists(SELECT * FROM projet.etudiants e WHERE e.id_etudiant = idEtudiant)THEN
-            RAISE 'etudiant existe pas';
-            END IF;
-        SELECT * FROM projet.etudiants e WHERE e.id_etudiant = idEtudiant INTO etudiant;
-        for offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' AND os.semestre = etudiant.semestre LOOP
-            for mot IN SELECT m.mot_cle FROM projet.mots_cles m, projet.mot_cle_stage cs,projet.offres_de_stages os WHERE cs.id_offre_stage = os.id_offre_stage AND m.id_mot_cle = cs.id_mot_cle LOOP
+        for offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'validée' AND os.semestre = semestreEtudiant LOOP
+            for mot IN SELECT * FROM projet.mots_cles m, projet.mot_cle_stage cs,projet.offres_de_stages os WHERE cs.id_offre_stage = os.id_offre_stage AND m.id_mot_cle = cs.id_mot_cle LOOP
                 sep := ', ';
-                mots_cle := mots_cle || sep || mot;
+                mots_cle := mots_cle || sep || mot.mot_cle;
             end loop;
             SELECT offre.code_offre_stage os,e.nom,e.adresse,offre.description,mots_cle
             FROM projet.entreprises e WHERE offre.identifiant_entreprise = e.identifiant_entreprise INTO sortie;
