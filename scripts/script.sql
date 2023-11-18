@@ -3,20 +3,21 @@ CREATE SCHEMA projet;
 
 CREATE TABLE projet.etudiants(
     id_etudiant SERIAL PRIMARY KEY ,
-    nom VARCHAR(50) NOT NULL CHECK ( nom != '' ),
-    prenom VARCHAR(50) NOT NULL CHECK ( prenom != '' ),
-    email VARCHAR(100) NOT NULL UNIQUE CHECK ( email != '' AND email LIKE '%@student.vinci.be' ),
+    nom VARCHAR(50) NOT NULL CHECK ( nom != '' )CHECK ( nom != '' ),
+    prenom VARCHAR(50) NOT NULL CHECK ( prenom != '' )CHECK ( prenom != '' ),
+    email VARCHAR(100) NOT NULL UNIQUE CHECK ( email != '' AND email LIKE '%@student.vinci.be' )CHECK ( email != '' AND email LIKE '%@student.vinci.be' ),
     semestre VARCHAR(2) CHECK ( semestre IN ('Q1', 'Q2') ),
     mdp VARCHAR(100) NOT NULL ,
     nb_candidatures_attente INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE projet.entreprises(
-    identifiant_entreprise VARCHAR(3) PRIMARY KEY ,
+    identifiant_entreprise_entreprise VARCHAR(3) PRIMARY KEY ,
     nom VARCHAR(50) NOT NULL ,
     adresse VARCHAR(100) NOT NULL ,
     mdp VARCHAR(100) NOT NULL ,
     email VARCHAR(100) NOT NULL UNIQUE,
+    nb_offres_stages INTEGER NOT NULL DEFAULT 0,
     nb_offres_stages INTEGER NOT NULL DEFAULT 0
 );
 
@@ -27,12 +28,13 @@ CREATE TABLE projet.mots_cles(
 
 CREATE TABLE projet.offres_de_stages(
     id_offre_stage SERIAL PRIMARY KEY ,
-    etat VARCHAR(11) NOT NULL DEFAULT 'non validée' CHECK ( etat IN ('non validée', 'validée', 'attribuée', 'annulée') ) ,
+    etat VARCHAR(11) NOT NULL DEFAULT 'non validée' DEFAULT 'non validée' CHECK ( etat IN ('non validée', 'validée', 'attribuée', 'annulée') ) ,
     semestre VARCHAR(2) NOT NULL CHECK ( semestre IN ('Q1', 'Q2') ) ,
     description VARCHAR(100) NOT NULL ,
     identifiant_entreprise VARCHAR(3) REFERENCES projet.entreprises(identifiant_entreprise)  NOT NULL ,
     code_offre_stage VARCHAR(20) NOT NULL UNIQUE,
-    nb_candidatures_attente INTEGER NOT NULL DEFAULT 0
+    nb_candidatures_attente INTEGER NOT NULL DEFAULT 0,
+    id_etudiant INTEGER REFERENCES projet.etudiants(id_etudiant) NULL
 );
 
 CREATE TABLE projet.mot_cle_stage(
