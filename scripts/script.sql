@@ -179,7 +179,85 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION projet.ajouterMotCleOffre(_mot_cle VARCHAR(20),_code_offre_stage VARCHAR(20)) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION projet.voirSesOffres(identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+    BEGIN
+        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.identifiant_entreprise = identifiantEntreprise LOOP
+            IF offre.etat = 'attribuée' THEN
+                SELECT offre.code_offre_stage, offre.description, offre.semestre, offre.etat, offre.nb_candidatures_attente, string_agg(e.nom, e.prenom) FROM projet.etudiants e GROUP BY offre.code_offre_stage, offre.description, offre.semestre, offre.etat, offre.nb_candidatures_attente INTO sortie;
+                RETURN NEXT sortie;
+                ELSE IF offre.etat = 'validée' THEN
+                    SELECT offre.code_offre_stage, offre.description, offre.semestre, offre.etat, offre.nb_candidatures_attente, 'pas attribuée'::VARCHAR(100) INTO sortie;
+                    RETURN NEXT sortie;
+                end if;
+            end if;
+        END LOOP;
+        RETURN;
+    END;
+    $$ LANGUAGE plpgsql;
+--ENTREPRISE 5
+CREATE OR REPLACE FUNCTION voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
+    DECLARE
+        candidature RECORD;
+        sortie RECORD;
+    BEGIN
+        IF identifiantEntreprise != (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre)
+            OR NOT EXISTS(SELECT * FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre) THEN
+            RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
+        END IF;
+        FOR candidature IN SELECT * FROM projet.candidatures c, projet.offres_de_stages os, projet.etudiants e
+                                    WHERE c.id_offre_stage = os.id_offre_stage AND os.code_offre_stage = codeOffre AND e.id_etudiant = c.id_etudiant LOOP
+            SELECT candidature.etat, candidature.nom, candidature.prenom, candidature.email, candidature.motivations INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+        RETURN;
+    END;
+    $$ LANGUAGE plpgsql;
+--ENTREPRISE 6
+CREATE OR REPLACE FUNCTION selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
+    DECLARE
+        offre RECORD;
+        etudiant RECORD;
+    BEGIN
+        IF identifiantEntreprise != (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre) THEN
+            RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
+        END IF;
+        IF (SELECT os.etat FROM projet.offres_de_stages os WHERE code_offre_stage = codeOffre) != 'validée' THEN
+            RAISE 'l''offre n''est pas dans l''etat validée';
+        end if;
+        IF (SELECT c.etat FROM projet.candidatures c, projet.offres_de_stages os, projet.etudiants e WHERE c.id_etudiant = e.id_etudiant AND c.id_offre_stage = os.id_offre_stage) != 'en attente' THEN
+            RAISE 'l''offre n''est pas dans l''etat en attente';
+        end if;
+        SELECT * FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre INTO offre;
+        SELECT * FROM projet.etudiants WHERE email = emailEtudiant INTO etudiant;
+        UPDATE projet.offres_de_stages SET etat = 'attribuée' WHERE code_offre_stage = codeOffre;
+        UPDATE projet.candidatures set etat = 'acceptée' WHERE projet.etudiants.email = emailEtudiant;
+        UPDATE projet.candidatures c SET etat = 'annulée' WHERE id_etudiant = etudiant.id_etudiant AND etat = 'en attente';
+        UPDATE projet.candidatures c SET etat = 'refusée' WHERE c.id_offre_stage = offre.id_offre_stage AND etat = 'en attente';
+        UPDATE projet.offres_de_stages os SET etat = 'annulée' WHERE os.identifiant_entreprise = offre.identifiant_entreprise AND os.semestre = offre.semestre AND etat = 'validée';
+        UPDATE projet.candidatures c SET etat = 'refusée' WHERE c.etat = 'en attente' AND c.id_offre_stage = offre.id_offre_stage AND offre.identifiant_entreprise = identifiantEntreprise;
+        RETURN TRUE;
+    END;
+    $$ LANGUAGE plpgsql;
+--ENTREPRISE 7
+CREATE OR REPLACE FUNCTION projet.annulerOffre(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
+    DECLARE
+        offre RECORD;
+    BEGIN
+        IF identifiantEntreprise != (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre) THEN
+            RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
+        END IF;
+        IF (SELECT etat FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre) != 'validée' THEN
+            RAISE 'l''offre doit etre dans l''etat validée';
+        end if;
+        SELECT * FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre INTO offre;
+        UPDATE projet.candidatures c SET etat = 'annulée' WHERE c.id_offre_stage = offre.id_offre_stage;
+    end;
+    $$ LANGUAGE plpgsql;
+    
+    CREATE OR REPLACE FUNCTION projet.ajouterMotCleOffre(_mot_cle VARCHAR(20),_code_offre_stage VARCHAR(20)) RETURNS BOOLEAN AS $$
 DECLARE
     offre RECORD;
     id_mot_cle INTEGER := 0;
@@ -227,6 +305,31 @@ CREATE OR REPLACE FUNCTION  projet.afficherOffresStage(semestreEtudiant VARCHAR(
         return;
     END;
     $$ LANGUAGE plpgsql;
+--ETUDIANT 2.
+CREATE OR REPLACE FUNCTION  projet.rechercheStageParMotCle(mot_cle_cherche VARCHAR(60),semestreEtudiant VARCHAR(2)) RETURNS SETOF RECORD AS $$
+    DECLARE
+        offre RECORD;
+        sortie RECORD;
+        mots_cle VARCHAR(60) := '';
+        mot RECORD;
+        sep VARCHAR;
+    BEGIN
+        for offre IN SELECT * FROM projet.offres_de_stages os, projet.mot_cle_stage ms, projet.mots_cles mc WHERE mc.id_mot_cle = ms.id_mot_cle AND os.id_offre_stage = ms.id_offre_stage AND os.semestre = semestreEtudiant AND mc.mot_cle = mot_cle_cherche LOOP
+            for mot IN SELECT * FROM projet.mots_cles m, projet.mot_cle_stage cs,projet.offres_de_stages os WHERE cs.id_offre_stage = os.id_offre_stage AND m.id_mot_cle = cs.id_mot_cle LOOP
+                IF mots_cle = '' THEN
+                    mots_cle := mot.mot_cle;
+                ELSE
+                sep := ', ';
+                mots_cle := mots_cle || sep || mot.mot_cle;
+                end if;
+            end loop;
+            SELECT offre.code_offre_stage os,e.nom,e.adresse,offre.description,mots_cle
+            FROM projet.entreprises e WHERE offre.identifiant_entreprise = e.identifiant_entreprise INTO sortie;
+            RETURN NEXT sortie;
+        END LOOP;
+        return;
+    END;
+    $$ LANGUAGE plpgsql;
 
 --PROFESSEUR 1. Encoder un étudiant
 SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test');
@@ -257,3 +360,5 @@ WHERE NOT EXISTS(SELECT * FROM projet.candidatures c WHERE c.id_etudiant = e.id_
 SELECT projet.afficherOffresAttribuees();
 --ETUDIANT 1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage
 SELECT * FROM projet.afficherOffresStage('Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
+--ETUDIANT 2. Recherche d’une offre de stage par mot clé. (Meme semestre)
+SELECT * FROM projet.rechercheStageParMotCle('Java','Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
