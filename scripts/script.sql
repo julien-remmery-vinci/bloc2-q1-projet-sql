@@ -50,6 +50,19 @@ CREATE TABLE projet.candidatures(
     PRIMARY KEY (id_offre_stage, id_etudiant)
 );
 
+--TRIGGER PROFESSEUR
+CREATE OR REPLACE FUNCTION projet.validerOffreTrigger() RETURNS TRIGGER AS $$
+    DECLARE
+
+    BEGIN
+        IF NEW.etat ='validée' AND OLD.etat != 'non validée' THEN RAISE 'l''etat doit etre non validée'; END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER valider_offre_trigger BEFORE UPDATE ON projet.offres_de_stages FOR EACH ROW
+EXECUTE PROCEDURE projet.validerOffreTrigger();
+
 --TRIGGER ENTREPRISE
 CREATE OR REPLACE FUNCTION projet.ajouterCodeOffre() RETURNS TRIGGER AS $$
 DECLARE
@@ -120,43 +133,10 @@ CREATE OR REPLACE FUNCTION projet.afficherOffresNonValidees() RETURNS SETOF RECO
 
 CREATE OR REPLACE FUNCTION projet.validerOffre(code VARCHAR(20)) RETURNS BOOLEAN AS $$
     DECLARE
-        offre RECORD;
+
     BEGIN
-        IF NOT EXISTS(SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code) THEN
-            RAISE 'aucune offre éxistante avec ce code';
-        END IF;
-        SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code INTO offre;
-        IF offre.etat != 'non validée' THEN
-            RAISE 'l offre entrée doit être non validée';
-        END IF;
-        UPDATE projet.offres_de_stages SET etat = 'validée' WHERE id_offre_stage = offre.id_offre_stage;
+        UPDATE projet.offres_de_stages SET etat = 'validée' WHERE code_offre_stage = code;
         RETURN TRUE;
-    END;
-    $$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION projet.afficherEtudiantsSansStage() RETURNS SETOF RECORD AS $$
-    DECLARE
-        etudiant RECORD;
-        sortie RECORD;
-    BEGIN
-        FOR etudiant IN SELECT * FROM projet.etudiants LOOP
-            IF NOT EXISTS(SELECT * FROM projet.candidatures c WHERE c.id_etudiant = etudiant.id_etudiant AND c.etat = 'acceptée') THEN
-                SELECT etudiant.nom, etudiant.prenom, etudiant.email, etudiant.semestre, etudiant.nb_candidatures_attente INTO sortie;
-                RETURN NEXT sortie;
-            END IF;
-        END LOOP;
-    END;
-    $$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION projet.afficherOffresAttribuees() RETURNS SETOF RECORD AS $$
-    DECLARE
-        offre RECORD;
-        sortie RECORD;
-    BEGIN
-        FOR offre IN SELECT * FROM projet.offres_de_stages os WHERE os.etat = 'attribuée' LOOP
-            SELECT offre.code_offre_stage, en.nom, et.nom, et.prenom FROM projet.entreprises en, projet.etudiants et INTO sortie;
-            RETURN NEXT sortie;
-        END LOOP;
     END;
     $$ LANGUAGE plpgsql;
 
@@ -220,7 +200,7 @@ CREATE OR REPLACE FUNCTION projet.voirSesOffres(identifiantEntreprise VARCHAR(3)
     END;
     $$ LANGUAGE plpgsql;
 --ENTREPRISE 5
-CREATE OR REPLACE FUNCTION voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
+CREATE OR REPLACE FUNCTION projet.voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
     DECLARE
         candidature RECORD;
         sortie RECORD;
@@ -238,7 +218,7 @@ CREATE OR REPLACE FUNCTION voirCandidatures(codeOffre VARCHAR(20), identifiantEn
     END;
     $$ LANGUAGE plpgsql;
 --ENTREPRISE 6
-CREATE OR REPLACE FUNCTION selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION projet.selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
     DECLARE
         offre RECORD;
         etudiant RECORD;
@@ -256,7 +236,7 @@ CREATE OR REPLACE FUNCTION selectionnerEtudiant(codeOffre VARCHAR(20), emailEtud
         SELECT * FROM projet.etudiants WHERE email = emailEtudiant INTO etudiant;
         UPDATE projet.offres_de_stages SET etat = 'attribuée' WHERE code_offre_stage = codeOffre;
         UPDATE projet.candidatures set etat = 'acceptée' WHERE projet.etudiants.email = emailEtudiant;
-        UPDATE projet.candidatures c SET etat = 'annulée' WHERE id_etudiant = etudiant.id_etudiant AND etat = 'en attente';
+        UPDATE projet.candidatures c SET etat = 'annulée' WHERE c.id_etudiant = etudiant.id_etudiant AND c.etat = 'en attente';
         UPDATE projet.candidatures c SET etat = 'refusée' WHERE c.id_offre_stage = offre.id_offre_stage AND etat = 'en attente';
         UPDATE projet.offres_de_stages os SET etat = 'annulée' WHERE os.identifiant_entreprise = offre.identifiant_entreprise AND os.semestre = offre.semestre AND etat = 'validée';
         UPDATE projet.candidatures c SET etat = 'refusée' WHERE c.etat = 'en attente' AND c.id_offre_stage = offre.id_offre_stage AND offre.identifiant_entreprise = identifiantEntreprise;
@@ -356,8 +336,12 @@ SELECT * FROM projet.voirSesOffres('W2G') AS (code_offre_stage VARCHAR(20), desc
 --PROFESSEUR 7. Voir les étudiants qui n’ont pas de stage (pas de candidature à l’état « acceptée »).
 SELECT e.nom, e.prenom, e.email, e.semestre, e.nb_candidatures_attente FROM projet.etudiants e
 WHERE NOT EXISTS(SELECT * FROM projet.candidatures c WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée');
+--ENTREPRISE 5. Voir les candidatures pour une de ses offres de stages en donnant son code
+SELECT * FROM projet.voircandidatures('W2G1', 'W2G') AS (etat VARCHAR(10), nom VARCHAR(50), prenom VARCHAR(50), email VARCHAR(100), motivations VARCHAR(100));
+--ENTREPRISE 6. Sélectionner un étudiant pour une de ses offres de stage
+SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
 --PROFESSEUR 8. Voir les offres de stage dans l’état « attribuée »
-SELECT projet.afficherOffresAttribuees();
+SELECT o.code_offre_stage, en.nom, et.nom, et.prenom FROM projet.entreprises en, projet.etudiants et, projet.offres_de_stages o WHERE o.identifiant_entreprise = en.identifiant_entreprise AND o.id_etudiant = et.id_etudiant;
 --ETUDIANT 1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage
 SELECT * FROM projet.afficherOffresStage('Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
 --ETUDIANT 2. Recherche d’une offre de stage par mot clé. (Meme semestre)
