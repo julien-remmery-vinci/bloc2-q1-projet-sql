@@ -61,9 +61,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 CREATE TRIGGER code_offre_trigger BEFORE INSERT ON projet.offres_de_stages FOR EACH ROW
 EXECUTE PROCEDURE projet.ajouterCodeOffre();
+
+CREATE OR REPLACE FUNCTION  projet.ajouterMotCleOffreTrigger() RETURNS TRIGGER AS $$
+DECLARE
+
+BEGIN
+    IF((SELECT count(*) FROM projet.mot_cle_stage cs WHERE new.id_offre_stage = cs.id_offre_stage) = 3)
+        THEN RAISE 'Il y a deja 3 mots clé pour cette offre de stage';
+        END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER mot_cle_stage_trigger BEFORE INSERT ON projet.mot_cle_stage FOR EACH ROW
+EXECUTE PROCEDURE projet.ajouterMotCleOffreTrigger();
 
 --PARTIE PROFESSEUR
 CREATE OR REPLACE FUNCTION projet.encoderEtudiant(nomEtudiant VARCHAR(50), prenomEtudiant VARCHAR(50), emailEtudiant VARCHAR(100), semestreEtudiant VARCHAR(2), mdpEtudiant VARCHAR(100)) RETURNS INTEGER AS $$
@@ -161,6 +174,30 @@ BEGIN
     INSERT INTO projet.offres_de_stages (semestre,description,identifiant_entreprise) VALUES (_semestre,_description,_id_entreprise)
         RETURNING id_offre_stage into id;
     return id;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION projet.ajouterMotCleOffre(_mot_cle VARCHAR(20),_code_offre_stage VARCHAR(20)) RETURNS BOOLEAN AS $$
+DECLARE
+    offre RECORD;
+    id_mot_cle INTEGER := 0;
+    boolean BOOLEAN := TRUE;
+BEGIN
+    IF NOT EXISTS(SELECT * FROM projet.mots_cles m
+                WHERE mot_cle = _mot_cle)
+    THEN RAISE 'Le mot clé n''est pas dans la table mot clé';
+    END IF;
+    SELECT * FROM projet.mots_cles m
+                WHERE mot_cle = _mot_cle INTO id_mot_cle;
+    SELECT * from projet.offres_de_stages o WHERE o.code_offre_stage = _code_offre_stage INTO offre;
+    IF EXISTS(SELECT * FROM projet.mot_cle_stage cs, projet.offres_de_stages o, projet.mots_cles m
+                WHERE o.code_offre_stage = _code_offre_stage AND o.id_offre_stage = cs.id_offre_stage
+                  AND cs.id_mot_cle = m.id_mot_cle AND (o.etat = 'attribuée' OR o.etat = 'annulée'))
+        THEN
+        RAISE 'Ne peut pas ajouter de mots clés';
+    END IF;
+    INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (id_mot_cle,offre.id_offre_stage);
+    RETURN boolean;
 END;
 $$ LANGUAGE plpgsql;
 
