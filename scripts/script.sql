@@ -339,6 +339,10 @@ SELECT projet.encoderMotcle('Java');
 SELECT projet.encoderMotcle('JavaScript');
 --ENTREPRISE 1. Encoder une offre de stage
 SELECT projet.encoderOffreDeStage('Stage observation', 'Q1', 'W2G');
+--ENTREPRISE 3. Ajouter un mot clé à une de ses offres de stage
+SELECT projet.ajouterMotCleOffre('Web','W2G1');
+SELECT projet.ajouterMotCleOffre('Java','W2G1');
+SELECT projet.ajouterMotCleOffre('JavaScript','W2G1');
 --INSERT TEST LIEN MOTS CLES STAGE
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 1);
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 1);
