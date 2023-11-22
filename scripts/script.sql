@@ -264,21 +264,24 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER selectionner_etudiant_trigger BEFORE UPDATE ON projet.offres_de_stages FOR EACH ROW
 EXECUTE PROCEDURE projet.selectionnerEtudiantTrigger();
 
+
+
+
 CREATE OR REPLACE FUNCTION projet.selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
     DECLARE
         offre RECORD;
         etudiant RECORD;
     BEGIN
+        SELECT * FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre INTO offre;
+        SELECT * FROM projet.etudiants WHERE email = emailEtudiant INTO etudiant;
         IF identifiantEntreprise != (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre) THEN
             RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
         END IF;
-        IF (SELECT c.etat FROM projet.candidatures c, projet.offres_de_stages os, projet.etudiants e WHERE c.id_etudiant = e.id_etudiant AND c.id_offre_stage = os.id_offre_stage) != 'en attente' THEN
-            RAISE 'l''offre n''est pas dans l''etat en attente';
+        IF (SELECT c.etat FROM projet.candidatures c WHERE c.id_etudiant = etudiant.id_etudiant AND c.id_offre_stage = offre.id_offre_stage) != 'en attente' THEN
+            RAISE 'la candidature n''est pas dans l''etat en attente';
         end if;
-        SELECT * FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre INTO offre;
-        SELECT * FROM projet.etudiants WHERE email = emailEtudiant INTO etudiant;
-        UPDATE projet.offres_de_stages SET etat = 'attribuée' WHERE code_offre_stage = codeOffre;
-        UPDATE projet.candidatures set etat = 'acceptée' WHERE projet.etudiants.email = emailEtudiant;
+        UPDATE projet.offres_de_stages SET etat = 'attribuée', id_etudiant = etudiant.id_etudiant WHERE code_offre_stage = codeOffre;
+        UPDATE projet.candidatures c set etat = 'acceptée' WHERE c.id_etudiant = etudiant.id_etudiant AND c.id_offre_stage = offre.id_offre_stage;
         UPDATE projet.candidatures c SET etat = 'annulée' WHERE id_etudiant = etudiant.id_etudiant AND etat = 'en attente';
         UPDATE projet.candidatures c SET etat = 'refusée' WHERE c.id_offre_stage = offre.id_offre_stage AND etat = 'en attente';
         UPDATE projet.offres_de_stages os SET etat = 'annulée' WHERE os.identifiant_entreprise = offre.identifiant_entreprise AND os.semestre = offre.semestre AND etat = 'validée';
@@ -432,10 +435,10 @@ SELECT * FROM projet.afficherOffresStage('Q1') AS (code_offre VARCHAR(20), nom_e
 --ETUDIANT 2. Recherche d’une offre de stage par mot clé. (Meme semestre)
 SELECT * FROM projet.rechercheStageParMotCle('Java','Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
 --ETUDIANT 3. Poser sa candidature.
-SELECT projet.poserCandidature('W2G1','j''aime les hommes',1);
-SELECT projet.poserCandidature('APT1','j''aime les hoes',1); --SEMESTRE
---SELECT projet.poserCandidature('APT1','j''aime les hoes',3); --NON VALIDE
-SELECT projet.poserCandidature('WWF1','j''aime les hommes',1); --OFFRE DE STAGE ACCEPTE
---SELECT projet.poserCandidature('WWF1','j''aime les hommes',2); -- DEJA POSTULE
+SELECT projet.poserCandidature('W2G1','Je veux faire un stage chez vous',1);
+SELECT projet.poserCandidature('APT1','Je veux faire un stage chez vous',1); --SEMESTRE
+--SELECT projet.poserCandidature('APT1','Je veux faire un stage chez vous',3); --NON VALIDE
+SELECT projet.poserCandidature('WWF1','Je veux faire un stage chez vous',1); --OFFRE DE STAGE ACCEPTE
+--SELECT projet.poserCandidature('WWF1','Je veux faire un stage chez vous',2); -- DEJA POSTULE
 --ENTREPRISE 6
---SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
+SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
