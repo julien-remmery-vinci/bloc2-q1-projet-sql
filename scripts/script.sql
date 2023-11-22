@@ -43,7 +43,7 @@ CREATE TABLE projet.mot_cle_stage(
 );
 
 CREATE TABLE projet.candidatures(
-    etat VARCHAR(10) NOT NULL CHECK ( etat IN ('en attente', 'acceptée', 'refusée', 'annulée') ) ,
+    etat VARCHAR(10) NOT NULL DEFAULT 'en attente' CHECK ( etat IN ('en attente', 'acceptée', 'refusée', 'annulée') ) ,
     motivations VARCHAR(100) NOT NULL ,
     id_offre_stage INTEGER REFERENCES projet.offres_de_stages(id_offre_stage),
     id_etudiant INTEGER REFERENCES projet.etudiants(id_etudiant),
@@ -329,30 +329,73 @@ CREATE OR REPLACE FUNCTION  projet.rechercheStageParMotCle(mot_cle_cherche VARCH
     END;
     $$ LANGUAGE plpgsql;
 
+--ETUDIANT 3.
+
+--3. Poser sa candidature. Pour cela, il doit donner le code de l’offre de stage et donner ses
+--motivations sous format textuel. Il ne peut poser de candidature s’il a déjà une
+-- acceptée, s’il a déjà posé sa candidature pour cette offre, si l’offre n’est
+--pas dans l’état validée ou si l’offre ne correspond pas au bon semestre.
+CREATE OR REPLACE FUNCTION  projet.poserCandidatureTrigger() RETURNS TRIGGER AS $$
+DECLARE
+
+BEGIN
+    IF EXISTS (SELECT * FROM projet.candidatures ca WHERE ca.etat = 'acceptée' AND ca.id_etudiant = NEW.id_etudiant)
+        THEN RAISE 'L ''etudiant a dejà une offre de stage acceptée';
+        END IF;
+    IF EXISTS (SELECT * FROM projet.candidatures ca WHERE ca.id_offre_stage = NEW.id_offre_stage AND ca.id_etudiant = NEW.id_etudiant)
+        THEN RAISE 'L ''etudiant a dejà postulé pour l''offre de stage';
+        END IF;
+    IF EXISTS (SELECT * FROM projet.candidatures ca, projet.etudiants et,projet.offres_de_stages of WHERE (ca.etat != 'validée' OR et.semestre != of.semestre) AND ca.id_offre_stage = NEW.id_offre_stage)
+        THEN RAISE 'Etat non validée ou mavuais semestre';
+        END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER checkCandidature BEFORE INSERT ON projet.candidatures FOR EACH ROW
+EXECUTE PROCEDURE projet.poserCandidatureTrigger();
+
+CREATE OR REPLACE FUNCTION  projet.poserCandidature(code_stage VARCHAR(20),motivation VARCHAR(100),_id_etudiant INTEGER) RETURNS BOOLEAN AS $$
+DECLARE
+    id_code INTEGER := 0;
+    BEGIN
+    SELECT * FROM projet.offres_de_stages of WHERE of.code_offre_stage = code_stage INTO id_code;
+        INSERT INTO projet.candidatures(motivations, id_offre_stage, id_etudiant) VALUES(motivation,id_code,_id_etudiant);
+        return true;
+    END;
+    $$ LANGUAGE plpgsql;
+
+
+
+
 --PROFESSEUR 1. Encoder un étudiant
-SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test');
+SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test1');
+SELECT projet.encoderEtudiant('Dirna', 'San', 'dirna.san@student.vinci.be', 'Q2', 'test2');
+SELECT projet.encoderEtudiant('lil', 'Gerry', 'lil.gerry@student.vinci.be', 'Q1', 'test3');
 --PROFESSEUR 2. Encoder une entreprise
 SELECT projet.encoderEntreprise('where2go', 'Rue des champions 1, Bruxelles', 'test@gmail.com', 'W2G', 'test');
+SELECT projet.encoderEntreprise('apptweak', 'Rue des ptit 5, Bruxelles', 'test2@gmail.com', 'APT', 'test2');
+SELECT projet.encoderEntreprise('google', 'Rue des Test 8, Bruxelles', 'test3@gmail.com', 'WWF', 'test3');
 --PROFESSEUR 3. Encoder un mot-clé que les entreprises pourront utiliser pour décrire leur stage
 SELECT projet.encoderMotcle('Web');
 SELECT projet.encoderMotcle('Java');
 SELECT projet.encoderMotcle('JavaScript');
 --ENTREPRISE 1. Encoder une offre de stage
 SELECT projet.encoderOffreDeStage('Stage observation', 'Q1', 'W2G');
---ENTREPRISE 3. Ajouter un mot clé à une de ses offres de stage
-SELECT projet.ajouterMotCleOffre('Web','W2G1');
-SELECT projet.ajouterMotCleOffre('Java','W2G1');
-SELECT projet.ajouterMotCleOffre('JavaScript','W2G1');
+SELECT projet.encoderOffreDeStage('Stage', 'Q2', 'APT');
+SELECT projet.encoderOffreDeStage('Stages', 'Q2', 'WWF');
 --INSERT TEST LIEN MOTS CLES STAGE
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 1);
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 1);
 INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (3, 1);
+INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 3);
+INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 2);
 --ENTREPRISE 2. Voir les mots-clés disponibles pour décrire une offre de stage
 SELECT mc.mot_cle FROM projet.mots_cles mc;
 --PROFESSEUR 4. Voir les offres de stage dans l’état « non validée »
 SELECT os.code_offre_stage, os.semestre, e.nom, os.description FROM projet.offres_de_stages os, projet.entreprises e WHERE os.identifiant_entreprise = e.identifiant_entreprise AND os.etat = 'non validée';
 --PROFESSEUR 5. Valider une offre de stage en donnant son code
 SELECT projet.valideroffre('W2G1');
+SELECT projet.valideroffre('WWF1');
 --PROFESSEUR 6. Voir les offres de stage dans l’état « validée »
 SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description FROM projet.entreprises e, projet.offres_de_stages offre WHERE offre.etat = 'validée';
 --ENTREPRISE 4. Voir ses offres de stages
@@ -366,3 +409,9 @@ SELECT projet.afficherOffresAttribuees();
 SELECT * FROM projet.afficherOffresStage('Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
 --ETUDIANT 2. Recherche d’une offre de stage par mot clé. (Meme semestre)
 SELECT * FROM projet.rechercheStageParMotCle('Java','Q1') AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));
+--ETUDIANT 3. Poser sa candidature.
+SELECT projet.poserCandidature('W2G1','j''aime les hommes',1);
+SELECT projet.poserCandidature('APT1','j''aime les hoes',1); --SEMESTRE
+--SELECT projet.poserCandidature('APT1','j''aime les hoes',3); --NON VALIDE
+SELECT projet.poserCandidature('WWF1','j''aime les hommes',1); --OFFRE DE STAGE ACCEPTE
+SELECT projet.poserCandidature('WWF1','j''aime les hommes',2); -- DEJA POSTULE
