@@ -163,10 +163,6 @@ DECLARE
     id_mot_cle INTEGER := 0;
     boolean BOOLEAN := TRUE;
 BEGIN
-    IF NOT EXISTS(SELECT * FROM projet.mots_cles m
-                WHERE mot_cle = _mot_cle)
-    THEN RAISE 'Le mot clé n''est pas dans la table mot clé';
-    END IF;
     SELECT * FROM projet.mots_cles m
                 WHERE mot_cle = _mot_cle INTO id_mot_cle;
     SELECT * from projet.offres_de_stages o WHERE o.code_offre_stage = _code_offre_stage INTO offre;
