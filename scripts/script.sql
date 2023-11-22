@@ -51,12 +51,25 @@ CREATE TABLE projet.candidatures(
 );
 
 --TRIGGER ENTREPRISE
+CREATE OR REPLACE FUNCTION projet.augmenterNbOffres() RETURNS TRIGGER AS $$
+DECLARE
+    nb_offres INTEGER;
+BEGIN
+    SELECT e.nb_offres_stages FROM projet.entreprises e WHERE e.identifiant_entreprise = NEW.identifiant_entreprise INTO nb_offres;
+    UPDATE projet.entreprises SET nb_offres_stages = nb_offres_stages + 1 WHERE identifiant_entreprise = NEW.identifiant_entreprise;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER augmenter_nb_offres_trigger BEFORE INSERT ON projet.offres_de_stages FOR EACH ROW
+EXECUTE PROCEDURE projet.augmenterNbOffres();
+
 CREATE OR REPLACE FUNCTION projet.ajouterCodeOffre() RETURNS TRIGGER AS $$
 DECLARE
-    nb_offres varchar(20):='';
+    nb_offres INTEGER;
 BEGIN
-    SELECT cast(e.nb_offres_stages + 1 as varchar(20)) FROM projet.entreprises e INTO nb_offres;
-        new.code_offre_stage = new.identifiant_entreprise || nb_offres;
+    SELECT e.nb_offres_stages FROM projet.entreprises e WHERE e.identifiant_entreprise = NEW.identifiant_entreprise INTO nb_offres;
+    new.code_offre_stage = new.identifiant_entreprise || CAST(nb_offres AS VARCHAR);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -77,7 +90,6 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER mot_cle_stage_trigger BEFORE INSERT ON projet.mot_cle_stage FOR EACH ROW
 EXECUTE PROCEDURE projet.ajouterMotCleOffreTrigger();
-
 --PARTIE PROFESSEUR
 CREATE OR REPLACE FUNCTION projet.encoderEtudiant(nomEtudiant VARCHAR(50), prenomEtudiant VARCHAR(50), emailEtudiant VARCHAR(100), semestreEtudiant VARCHAR(2), mdpEtudiant VARCHAR(100)) RETURNS INTEGER AS $$
 DECLARE
@@ -167,7 +179,7 @@ DECLARE
     code_offre VARCHAR(20) := '';
 BEGIN
     IF EXISTS(SELECT * FROM projet.entreprises e, projet.offres_de_stages o
-                WHERE e.identifiant_entreprise = o.identifiant_entreprise AND e.identifiant_entreprise = _id_entreprise AND o.semestre = _semestre)
+                WHERE e.identifiant_entreprise = o.identifiant_entreprise AND e.identifiant_entreprise = _id_entreprise AND o.semestre = _semestre AND o.etat = 'attribuée')
         THEN
         RAISE foreign_key_violation;
     END IF;
@@ -220,7 +232,7 @@ CREATE OR REPLACE FUNCTION projet.voirSesOffres(identifiantEntreprise VARCHAR(3)
     END;
     $$ LANGUAGE plpgsql;
 --ENTREPRISE 5
-CREATE OR REPLACE FUNCTION voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
+CREATE OR REPLACE FUNCTION projet.voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
     DECLARE
         candidature RECORD;
         sortie RECORD;
@@ -238,7 +250,21 @@ CREATE OR REPLACE FUNCTION voirCandidatures(codeOffre VARCHAR(20), identifiantEn
     END;
     $$ LANGUAGE plpgsql;
 --ENTREPRISE 6
-CREATE OR REPLACE FUNCTION selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION  projet.selectionnerEtudiantTrigger() RETURNS TRIGGER AS $$
+DECLARE
+
+BEGIN
+    IF(NEW.etat = 'attribuée' AND OLD.etat != 'validée')THEN
+        RAISE 'l''offre n''est pas dans l''etat validée';
+    end if;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER selectionner_etudiant_trigger BEFORE UPDATE ON projet.offres_de_stages FOR EACH ROW
+EXECUTE PROCEDURE projet.selectionnerEtudiantTrigger();
+
+CREATE OR REPLACE FUNCTION projet.selectionnerEtudiant(codeOffre VARCHAR(20), emailEtudiant VARCHAR(100), identifiantEntreprise VARCHAR(3)) RETURNS BOOLEAN AS $$
     DECLARE
         offre RECORD;
         etudiant RECORD;
@@ -246,9 +272,6 @@ CREATE OR REPLACE FUNCTION selectionnerEtudiant(codeOffre VARCHAR(20), emailEtud
         IF identifiantEntreprise != (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre) THEN
             RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
         END IF;
-        IF (SELECT os.etat FROM projet.offres_de_stages os WHERE code_offre_stage = codeOffre) != 'validée' THEN
-            RAISE 'l''offre n''est pas dans l''etat validée';
-        end if;
         IF (SELECT c.etat FROM projet.candidatures c, projet.offres_de_stages os, projet.etudiants e WHERE c.id_etudiant = e.id_etudiant AND c.id_offre_stage = os.id_offre_stage) != 'en attente' THEN
             RAISE 'l''offre n''est pas dans l''etat en attente';
         end if;
@@ -381,14 +404,13 @@ SELECT projet.encoderMotcle('Java');
 SELECT projet.encoderMotcle('JavaScript');
 --ENTREPRISE 1. Encoder une offre de stage
 SELECT projet.encoderOffreDeStage('Stage observation', 'Q1', 'W2G');
+SELECT projet.encoderOffreDeStage('Stage observation', 'Q2', 'W2G');
 SELECT projet.encoderOffreDeStage('Stage', 'Q2', 'APT');
 SELECT projet.encoderOffreDeStage('Stages', 'Q2', 'WWF');
 --INSERT TEST LIEN MOTS CLES STAGE
-INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 1);
-INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 1);
-INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (3, 1);
-INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (2, 3);
-INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (1, 2);
+SELECT projet.ajouterMotCleOffre('Web', 'W2G1');
+SELECT projet.ajouterMotCleOffre('Java', 'W2G1');
+SELECT projet.ajouterMotCleOffre('JavaScript', 'W2G1');
 --ENTREPRISE 2. Voir les mots-clés disponibles pour décrire une offre de stage
 SELECT mc.mot_cle FROM projet.mots_cles mc;
 --PROFESSEUR 4. Voir les offres de stage dans l’état « non validée »
@@ -414,4 +436,6 @@ SELECT projet.poserCandidature('W2G1','j''aime les hommes',1);
 SELECT projet.poserCandidature('APT1','j''aime les hoes',1); --SEMESTRE
 --SELECT projet.poserCandidature('APT1','j''aime les hoes',3); --NON VALIDE
 SELECT projet.poserCandidature('WWF1','j''aime les hommes',1); --OFFRE DE STAGE ACCEPTE
-SELECT projet.poserCandidature('WWF1','j''aime les hommes',2); -- DEJA POSTULE
+--SELECT projet.poserCandidature('WWF1','j''aime les hommes',2); -- DEJA POSTULE
+--ENTREPRISE 6
+--SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
