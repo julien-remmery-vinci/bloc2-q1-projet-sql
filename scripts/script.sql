@@ -442,3 +442,5 @@ SELECT projet.poserCandidature('WWF1','Je veux faire un stage chez vous',1); --O
 --SELECT projet.poserCandidature('WWF1','Je veux faire un stage chez vous',2); -- DEJA POSTULE
 --ENTREPRISE 6
 SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
+
+GRANT 
