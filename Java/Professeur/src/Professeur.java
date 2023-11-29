@@ -9,7 +9,7 @@ public class Professeur {
     static String url= "jdbc:postgresql://localhost:5432/postgres";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
-    static PreparedStatement login;
+//    static PreparedStatement login;
     static PreparedStatement encoderEtudiant;
     static PreparedStatement encoderEntreprise;
     static PreparedStatement encoderMotCle;
@@ -26,7 +26,7 @@ public class Professeur {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
+//            login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
             encoderEtudiant = conn.prepareStatement("SELECT projet.encoderEtudiant(?, ?, ?, ?, ?);");
             encoderEntreprise = conn.prepareStatement("SELECT projet.encoderEntreprise(?, ?, ?, ?, ?);");
             encoderMotCle = conn.prepareStatement("SELECT projet.encoderMotcle(?);");
@@ -43,7 +43,10 @@ public class Professeur {
         System.out.println("----------------------");
         System.out.println("Application professeur");
         System.out.println("----------------------");
-        if(!login()) return;
+//        while(!login()) {
+//            System.out.println("Identifiant incorrect");
+//            login();
+//        }
         int choix = 0;
         do{
             System.out.println("1. Encoder un étudiant");
@@ -85,21 +88,24 @@ public class Professeur {
             }
         }while(choix >= 1 && choix <= 8);
     }
-    private boolean login(){
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("email: ");
-        String email = scanner.next();
-        System.out.print("mot de passe: ");
-        String mdp = scanner.next();
-        ResultSet rs = null;
-        try {
-            login.setString(1, email);
-            rs = login.executeQuery();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        if(BCrypt.checkpw(mdp, ))
-    }
+//    private boolean login(){
+//        Scanner scanner = new Scanner(System.in);
+//        System.out.print("email: ");
+//        String email = scanner.next();
+//        System.out.print("mot de passe: ");
+//        String mdp = scanner.next();
+//        try {
+//            login.setString(1, email);
+//            try(ResultSet rs = login.executeQuery()){
+//                while (rs.next()) {
+//                    if(BCrypt.checkpw(mdp, rs.getString(2))) return true;
+//                }
+//            }
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return false;
+//    }
     private static void encoderEtudiant(){
         System.out.print("nom: ");
         String nom = scanner.next();
