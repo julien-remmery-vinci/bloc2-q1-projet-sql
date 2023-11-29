@@ -193,7 +193,7 @@ EXECUTE PROCEDURE projet.validerOffreTrigger();
 CREATE OR REPLACE FUNCTION projet.validerOffre(code VARCHAR(20)) RETURNS VOID AS
 $$
 DECLARE
-    
+
 BEGIN
     UPDATE projet.offres_de_stages SET etat = 'validée' WHERE code_offre_stage = code;
 END;
