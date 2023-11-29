@@ -122,15 +122,13 @@ EXECUTE PROCEDURE projet.ajouterMotCleOffreTrigger();
 --1. Encoder un étudiant
 CREATE OR REPLACE FUNCTION projet.encoderEtudiant(nomEtudiant VARCHAR(50), prenomEtudiant VARCHAR(50),
                                                   emailEtudiant VARCHAR(100), semestreEtudiant VARCHAR(2),
-                                                  mdpEtudiant VARCHAR(100)) RETURNS INTEGER AS
+                                                  mdpEtudiant VARCHAR(100)) RETURNS VOID AS
 $$
 DECLARE
-    id INTEGER := 0;
+
 BEGIN
     INSERT INTO projet.etudiants (nom, prenom, email, semestre, mdp)
-    VALUES (nomEtudiant, prenomEtudiant, emailEtudiant, semestreEtudiant, mdpEtudiant)
-    RETURNING id_etudiant INTO id;
-    RETURN id;
+    VALUES (nomEtudiant, prenomEtudiant, emailEtudiant, semestreEtudiant, mdpEtudiant);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -170,13 +168,13 @@ WHERE os.identifiant_entreprise = e.identifiant_entreprise
 CREATE OR REPLACE FUNCTION projet.validerOffreTrigger() RETURNS TRIGGER AS
 $$
 DECLARE
-    offre RECORD;
+    etat VARCHAR(11);
 BEGIN
-    IF NOT EXISTS(SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage) THEN
+    IF NOT EXISTS(SELECT os.etat FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage) THEN
         RAISE 'aucune offre éxistante avec ce code';
     END IF;
-    SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage INTO offre;
-    IF offre.etat != 'non validée' AND NEW.etat != 'attribuée' THEN
+    SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage INTO etat;
+    IF etat != 'non validée' AND NEW.etat != 'attribuée' THEN
         RAISE 'l offre entrée doit être non validée';
     END IF;
     RETURN NEW;
@@ -566,7 +564,6 @@ BEGIN
     return true;
 END;
 $$ LANGUAGE plpgsql;
-
 
 --PROFESSEUR 1. Encoder un étudiant
 SELECT projet.encoderEtudiant('Remmery', 'Julien', 'julien.remmery@student.vinci.be', 'Q1', 'test1');
