@@ -170,13 +170,15 @@ WHERE os.identifiant_entreprise = e.identifiant_entreprise
 CREATE OR REPLACE FUNCTION projet.validerOffreTrigger() RETURNS TRIGGER AS
 $$
 DECLARE
-    nb_offres INTEGER;
+    offre RECORD;
 BEGIN
-    SELECT e.nb_offres_stages
-    FROM projet.entreprises e
-    WHERE e.identifiant_entreprise = NEW.identifiant_entreprise
-    INTO nb_offres;
-    new.code_offre_stage = new.identifiant_entreprise || CAST(nb_offres AS VARCHAR);
+    IF NOT EXISTS(SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage) THEN
+        RAISE 'aucune offre éxistante avec ce code';
+    END IF;
+    SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = NEW.code_offre_stage INTO offre;
+    IF offre.etat != 'non validée' AND NEW.etat != 'attribuée' THEN
+        RAISE 'l offre entrée doit être non validée';
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -185,7 +187,7 @@ CREATE TRIGGER valider_offre_trigger
     BEFORE UPDATE
     ON projet.offres_de_stages
     FOR EACH ROW
-EXECUTE PROCEDURE projet.ajouterCodeOffre();
+EXECUTE PROCEDURE projet.validerOffreTrigger();
 
 --5. Valider une offre de stage en donnant son code
 CREATE OR REPLACE FUNCTION projet.validerOffre(code VARCHAR(20)) RETURNS VOID AS
@@ -193,17 +195,10 @@ $$
 DECLARE
     offre RECORD;
 BEGIN
-    IF NOT EXISTS(SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code) THEN
-        RAISE 'aucune offre éxistante avec ce code';
-    END IF;
-    SELECT * FROM projet.offres_de_stages os WHERE os.code_offre_stage = code INTO offre;
-    IF offre.etat != 'non validée' THEN
-        RAISE 'l offre entrée doit être non validée';
-    END IF;
-    UPDATE projet.offres_de_stages SET etat = 'validée' WHERE id_offre_stage = offre.id_offre_stage;
+    UPDATE projet.offres_de_stages SET etat = 'validée' WHERE code_offre_stage = code;
 END;
 $$ LANGUAGE plpgsql;
-UPDATE projet.offres_de_stages SET etat = 'validée' WHERE code_offre_stage = 'W2G50';
+
 --PROFESSEUR 6. Voir les offres de stage dans l’état « validée
 CREATE OR REPLACE VIEW projet.voirOffresValidees (code_offre_stage, semestre, nom, description) AS
 SELECT offre.code_offre_stage, offre.semestre, e.nom, offre.description
