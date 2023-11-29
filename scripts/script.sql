@@ -78,7 +78,7 @@ BEGIN
     IF EXISTS(SELECT * FROM projet.entreprises e, projet.offres_de_stages o
                 WHERE e.identifiant_entreprise = o.identifiant_entreprise AND e.identifiant_entreprise = new.identifiant_entreprise AND o.semestre = new.semestre AND o.etat = 'attribuée')
         THEN
-        RAISE 'Il y a déjà une offre de stage pour ce semestre ou attribuée';
+        RAISE 'Il y a déjà une offre de stage attribuée pour ce semestre';
     END IF;
     SELECT e.nb_offres_stages FROM projet.entreprises e WHERE e.identifiant_entreprise = NEW.identifiant_entreprise INTO nb_offres;
     new.code_offre_stage = new.identifiant_entreprise || CAST(nb_offres AS VARCHAR);
@@ -137,6 +137,12 @@ BEGIN
             RAISE 'l''offre doit etre dans l''etat validée';
         end if;
     RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION projet.selectionnerEtudiant() RETURNS TRIGGER AS $$ 
+DECLARE
+BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
@@ -254,6 +260,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 --PARTIE ENTREPRISE
+
+--1 Encoder une offre de stage
 CREATE OR REPLACE FUNCTION projet.encoderOffreDeStage(_description VARCHAR(100), _semestre VARCHAR(2), _id_entreprise VARCHAR(3)) RETURNS INTEGER AS $$
 DECLARE
     id INTEGER := 0;
@@ -264,6 +272,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--3 Ajouter un mot-clé
 CREATE OR REPLACE FUNCTION projet.ajouterMotCleOffre(_mot_cle VARCHAR(20),_code_offre_stage VARCHAR(20)) RETURNS BOOLEAN AS $$
 DECLARE
     offre RECORD;
@@ -271,14 +280,17 @@ DECLARE
     boolean BOOLEAN := TRUE;
 BEGIN
     SELECT * FROM projet.mots_cles m
-                WHERE mot_cle = _mot_cle INTO id_mot_cle;
-    SELECT * from projet.offres_de_stages o WHERE o.code_offre_stage = _code_offre_stage INTO offre;
+            WHERE mot_cle = _mot_cle INTO id_mot_cle;
+    SELECT * from projet.offres_de_stages o
+             WHERE o.code_offre_stage = _code_offre_stage INTO offre;
 
     INSERT INTO projet.mot_cle_stage (id_mot_cle, id_offre_stage) VALUES (id_mot_cle,offre.id_offre_stage);
     RETURN boolean;
 END;
 $$ LANGUAGE plpgsql;
 
+
+--4 Voir ses offres de stages
 CREATE OR REPLACE FUNCTION projet.voirSesOffres(identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
     DECLARE
         offre RECORD;
@@ -298,7 +310,7 @@ CREATE OR REPLACE FUNCTION projet.voirSesOffres(identifiantEntreprise VARCHAR(3)
     END;
     $$ LANGUAGE plpgsql;
 --ENTREPRISE 5
-CREATE OR REPLACE FUNCTION projet.voirCandidatures(codeOffre VARCHAR(20), identifiantEntreprise VARCHAR(3)) RETURNS SETOF RECORD AS $$
+CREATE OR REPLACE FUNCTION projet.voirCandidatures(codeOffre VARCHAR(20)) RETURNS SETOF RECORD AS $$
     DECLARE
         candidature RECORD;
         sortie RECORD;
