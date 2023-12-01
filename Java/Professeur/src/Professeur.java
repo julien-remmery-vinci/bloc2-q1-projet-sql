@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 public class Professeur {
     static String url= "jdbc:postgresql://localhost:5432/postgres";
+
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     //    static PreparedStatement login;
