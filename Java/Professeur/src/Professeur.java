@@ -4,12 +4,10 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Professeur {
-    private String email;
-    private String mdp;
     static String url= "jdbc:postgresql://localhost:5432/postgres";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
-//    static PreparedStatement login;
+    //    static PreparedStatement login;
     static PreparedStatement encoderEtudiant;
     static PreparedStatement encoderEntreprise;
     static PreparedStatement encoderMotCle;
@@ -87,8 +85,13 @@ public class Professeur {
                     break;
             }
         }while(choix >= 1 && choix <= 8);
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
-//    private boolean login(){
+    //    private boolean login(){
 //        Scanner scanner = new Scanner(System.in);
 //        System.out.print("email: ");
 //        String email = scanner.next();
@@ -124,7 +127,7 @@ public class Professeur {
             encoderEtudiant.setString(3, email);
             encoderEtudiant.setString(4, semestre);
             encoderEtudiant.setString(5, mdpAInserer);
-            int result = encoderEtudiant.executeUpdate();
+            encoderEtudiant.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -146,12 +149,12 @@ public class Professeur {
         String mdp = scanner.next();
         String mdpAInserer = BCrypt.hashpw(mdp, BCrypt.gensalt(10));
         try {
-            encoderEtudiant.setString(1, nom);
-            encoderEtudiant.setString(2, adresse);
-            encoderEtudiant.setString(3, email);
-            encoderEtudiant.setString(4, identifiant);
-            encoderEtudiant.setString(5, mdpAInserer);
-            int result = encoderEtudiant.executeUpdate();
+            encoderEntreprise.setString(1, nom);
+            encoderEntreprise.setString(2, adresse);
+            encoderEntreprise.setString(3, email);
+            encoderEntreprise.setString(4, identifiant);
+            encoderEntreprise.setString(5, mdpAInserer);
+            encoderEntreprise.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -164,8 +167,8 @@ public class Professeur {
         System.out.print("mot: ");
         String mot = scanner.next();
         try {
-            encoderEtudiant.setString(1, mot);
-            int result = encoderMotCle.executeUpdate();
+            encoderMotCle.setString(1, mot);
+            encoderMotCle.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -175,14 +178,22 @@ public class Professeur {
         }
     }
     private static void voirOffresNonValidees(){
-
+        try(ResultSet rs = voirOffresNonValidees.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void validerOffre(){
         System.out.print("code offre: ");
         String code = scanner.next();
         try {
             validerOffre.setString(1, code);
-            int result = validerOffre.executeUpdate();
+            validerOffre.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -192,10 +203,26 @@ public class Professeur {
         }
     }
     private static void voirOffresValidees(){
-
+        try(ResultSet rs = voirOffresValidees.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void voirEtudiantSansStage(){
-
+        try(ResultSet rs = voirEtudiantSansStage.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4) +"\t"+ rs.getString(5)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void voirOffresAttribuees(){
         try(ResultSet rs = voirOffresAttribuees.executeQuery()) {
