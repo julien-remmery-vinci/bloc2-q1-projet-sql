@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Professeur {
     private String email;
     private String mdp;
-    static String url= "jdbc:postgresql://localhost:5432/postgres";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
 //    static PreparedStatement login;
@@ -22,7 +22,7 @@ public class Professeur {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"postgres","");
+                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -146,12 +146,12 @@ public class Professeur {
         String mdp = scanner.next();
         String mdpAInserer = BCrypt.hashpw(mdp, BCrypt.gensalt(10));
         try {
-            encoderEtudiant.setString(1, nom);
-            encoderEtudiant.setString(2, adresse);
-            encoderEtudiant.setString(3, email);
-            encoderEtudiant.setString(4, identifiant);
-            encoderEtudiant.setString(5, mdpAInserer);
-            int result = encoderEtudiant.executeUpdate();
+            encoderEntreprise.setString(1, nom);
+            encoderEntreprise.setString(2, adresse);
+            encoderEntreprise.setString(3, email);
+            encoderEntreprise.setString(4, identifiant);
+            encoderEntreprise.setString(5, mdpAInserer);
+            encoderEntreprise.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
