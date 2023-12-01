@@ -20,7 +20,7 @@ public class Professeur {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"postgres","");
+                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
