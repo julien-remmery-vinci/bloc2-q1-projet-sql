@@ -32,7 +32,7 @@ public class Entreprise {
             voirMotCles = conn.prepareStatement("SELECT mc.mot_cle FROM projet.mots_cles mc;");
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
             ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
-            voirSesOffres = conn.prepareStatement("SELECT projet.voirSesOffres(?);");
+            voirSesOffres = conn.prepareStatement("SELECT projet.voirSesOffres(?) AS (code_offre_stage VARCHAR(20), description VARCHAR(100), semestre VARCHAR(2), etat VARCHAR(11), nb_candidatures_attente INTEGER, attribution VARCHAR(100);");
             voirCandidatures = conn.prepareStatement("SELECT projet.voirCandidatures(?)");
             selectionnerEtudiant = conn.prepareStatement("SELECT projet.selectionnerEtudiant(?, ?, ?);");
             annulerOffre = conn.prepareStatement("SELECT projet.annulerOffre(?);");
@@ -136,31 +136,21 @@ public class Entreprise {
         }
     }
     private static void ajouterMotCleOffre(){
-//        System.out.print("nom: ");
-//        String nom = scanner.next();
-//        System.out.print("adresse: ");
-//        String adresse = scanner.next();
-//        System.out.print("email: ");
-//        String email = scanner.next();
-//        System.out.print("identifiant: ");
-//        String identifiant = scanner.next();
-//        System.out.print("mot de passe: ");
-//        String mdp = scanner.next();
-//        String mdpAInserer = BCrypt.hashpw(mdp, BCrypt.gensalt(10));
-//        try {
-//            encoderEtudiant.setString(1, nom);
-//            encoderEtudiant.setString(2, adresse);
-//            encoderEtudiant.setString(3, email);
-//            encoderEtudiant.setString(4, identifiant);
-//            encoderEtudiant.setString(5, mdpAInserer);
-//            int result = encoderEtudiant.executeUpdate();
-//        } catch (PSQLException pe) {
-//            pe.printStackTrace();
-//        } catch (SQLException se) {
-//            System.out.println("Erreur lors de l’insertion !");
-//            se.printStackTrace();
-//            System.exit(1);
-//        }
+        System.out.print("mot clé: ");
+        String motCle = scanner.next();
+        System.out.print("codeOffre: ");
+        String codeOffre = scanner.next();
+        try {
+            ajouterMotCleOffre.setString(1, motCle);
+            ajouterMotCleOffre.setString(2, codeOffre);
+            ajouterMotCleOffre.execute();
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de l’insertion !");
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 
 
@@ -175,7 +165,28 @@ public class Entreprise {
     }
 
     private static void voirSesOffres(){
+        try {
+            System.out.println("test -0.5");
+            voirSesOffres.setString(1, idEntreprise);
+            try(ResultSet rs = voirSesOffres.executeQuery()){
+                System.out.println("test hngiuhegiuhiu");
+                while(rs.next()){
+                    System.out.println("test 0");
+                    System.out.println(
+                            rs.getString(1);
+                    );
+                }
+            }catch (SQLException e){
+                throw new RuntimeException(e);
+            }
 
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de l’insertion !");
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 
     private static void selectionnerEtudiant(){

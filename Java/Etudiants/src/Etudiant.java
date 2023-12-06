@@ -136,7 +136,7 @@ public class Etudiant {
         } catch (SQLException se) {
             System.out.println("Erreur lors de l’insertion !");
             se.printStackTrace();
-            System.exit(1);git
+            System.exit(1);
         }
     }
 
