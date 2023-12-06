@@ -8,11 +8,5 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="postgresql-42.4.0" level="project" />
-<<<<<<< HEAD:Java/Etudiants/Etudiants.iml
-    <orderEntry type="library" name="postgresql-42.4.02" level="project" />
-    <orderEntry type="library" name="postgresql-42.4.01" level="project" />
-    <orderEntry type="library" name="postgresql-42.4.0" level="project" />
-=======
->>>>>>> 736d299ed4aa3170f84c3114eb2fe6d8392229a7:Java/Etudiant/Etudiant.iml
   </component>
 </module>
