@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Etudiant {
     private String email;
     private String mdp;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbgerardlicaj";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -25,10 +25,10 @@ public class Etudiant {
             }
             login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
             afficherOffresStage = conn.prepareStatement("SELECT projet.afficherOffresStage(?);");
-            rechercheStageParMotCle = conn.prepareStatement("SELECT projet.encoderEntreprise(?, ?);");
-            poserCandidature = conn.prepareStatement("SELECT projet.encoderMotcle(?,?,?);");
+            rechercheStageParMotCle = conn.prepareStatement("SELECT projet.rechercheStageParMotCle(?, ?);");
+            poserCandidature = conn.prepareStatement("SELECT projet.poserCandidature(?,?,?);");
             voirOffresStageEtudiant = conn.prepareStatement("SELECT code_offre_stage, nom, etat, id_etudiant FROM projet.voirOffresStageEtudiant;");
-            annulerCandidature = conn.prepareStatement("SELECT projet.valideroffre(?);");
+            annulerCandidature = conn.prepareStatement("SELECT projet.annulerCandidature(?);");
              } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -43,7 +43,7 @@ public class Etudiant {
         }
         int choix = 0;
         do{
-            System.out.println("1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage");
+            System.out.println("/n1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage");
             System.out.println("2. Recherche d’une offre de stage par mot clé");
             System.out.println("3. Poser sa candidature.");
             System.out.println("4. Voir les offres de stage pour lesquels l’étudiant a posé sa candidature");
@@ -143,7 +143,7 @@ public class Etudiant {
     private static void voirOffresStageEtudiant(){
         try(ResultSet rs = voirOffresStageEtudiant.executeQuery()) {
             while(rs.next()){
-                System.out.println();
+                System.out.println(rs.getString(1));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

@@ -32,8 +32,8 @@ public class Entreprise {
             voirMotCles = conn.prepareStatement("SELECT mc.mot_cle FROM projet.mots_cles mc;");
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
             ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
-            voirSesOffres = conn.prepareStatement("SELECT projet.voirSesOffres(?) AS (code_offre_stage VARCHAR(20), description VARCHAR(100), semestre VARCHAR(2), etat VARCHAR(11), nb_candidatures_attente INTEGER, attribution VARCHAR(100);");
-            voirCandidatures = conn.prepareStatement("SELECT projet.voirCandidatures(?)");
+            voirSesOffres = conn.prepareStatement("SELECT * FROM projet.voirSesOffres(?) AS (code_offre_stage VARCHAR(20), description VARCHAR(100), semestre VARCHAR(2), etat VARCHAR(11), nb_candidatures_attente INTEGER, attribution VARCHAR(100));");
+            voirCandidatures = conn.prepareStatement("SELECT projet.voirCandidatures(?) AS (etat VARCHAR(10), nom VARCHAR(20),prenom VARCHAR(20),email VARCHAR(50), motivation VARCHAR(100));");
             selectionnerEtudiant = conn.prepareStatement("SELECT projet.selectionnerEtudiant(?, ?, ?);");
             annulerOffre = conn.prepareStatement("SELECT projet.annulerOffre(?);");
         } catch (SQLException e) {
@@ -102,6 +102,7 @@ public class Entreprise {
                         try (ResultSet rs1 = getIdEntreprise.executeQuery()){
                             while(rs1.next()){
                                 idEntreprise = rs1.getString(1);
+                                System.out.println(idEntreprise);
                             }
                         }catch (SQLException e){
                             throw new RuntimeException(e);
@@ -166,14 +167,11 @@ public class Entreprise {
 
     private static void voirSesOffres(){
         try {
-            System.out.println("test -0.5");
             voirSesOffres.setString(1, idEntreprise);
             try(ResultSet rs = voirSesOffres.executeQuery()){
-                System.out.println("test hngiuhegiuhiu");
                 while(rs.next()){
-                    System.out.println("test 0");
                     System.out.println(
-                            rs.getString(1);
+                            rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4) +"\t"+ rs.getInt(5)+"\t"+ rs.getString(6)
                     );
                 }
             }catch (SQLException e){
@@ -188,24 +186,35 @@ public class Entreprise {
             System.exit(1);
         }
     }
+    private static void voirCandidatures(){
+        System.out.print("code offre: ");
+        String code = scanner.next();
 
+        try {
+            voirCandidatures.setString(1, code);
+            voirCandidatures.executeUpdate();
+            try(ResultSet rs = voirCandidatures.executeQuery()){
+                    while(rs.next()){
+                        System.out.println(
+                                rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4) +"\t"+ rs.getInt(5)+"\t"
+                        );
+                    }
+                }catch (SQLException e){
+                    throw new RuntimeException(e);
+                }
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de la requete !");
+            se.printStackTrace();
+            System.exit(1);
+        }
+    }
     private static void selectionnerEtudiant(){
 
+
     }
-    private static void voirCandidatures(){
-//        System.out.print("code offre: ");
-//        String code = scanner.next();
-//        try {
-//            validerOffre.setString(1, code);
-//            int result = validerOffre.executeUpdate();
-//        } catch (PSQLException pe) {
-//            pe.printStackTrace();
-//        } catch (SQLException se) {
-//            System.out.println("Erreur lors de la requete !");
-//            se.printStackTrace();
-//            System.exit(1);
-//        }
-    }
+
 
     private static void annulerOffre(){
 
