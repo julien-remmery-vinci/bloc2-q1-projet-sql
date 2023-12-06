@@ -165,7 +165,7 @@ public class Professeur {
         String mot = scanner.next();
         try {
             encoderEtudiant.setString(1, mot);
-            int result = encoderMotCle.executeUpdate();
+            encoderMotCle.executeUpdate();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {

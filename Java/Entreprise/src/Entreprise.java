@@ -6,11 +6,13 @@ import java.util.Scanner;
 public class Entreprise {
 
     private static String idEntreprise;
-    static String url= "jdbc:postgresql://localhost:5432/postgres";
-    //static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+//    static String url= "jdbc:postgresql://localhost:5432/postgres";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
+
+    static PreparedStatement voirMotCles;
     static PreparedStatement encoderOffreDeStage;
     static PreparedStatement ajouterMotCleOffre;
     static PreparedStatement voirSesOffres;
@@ -21,12 +23,13 @@ public class Entreprise {
     static{
         try {
             try {
-                //conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
-                conn = DriverManager.getConnection(url,"postgres","nadir123");
+                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+//                conn = DriverManager.getConnection(url,"postgres","nadir123");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
             login = conn.prepareStatement("SELECT mdp FROM projet.entreprises WHERE email = ?");
+            voirMotCles = conn.prepareStatement("SELECT mc.mot_cle FROM projet.mots_cles mc;");
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
             ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
             voirSesOffres = conn.prepareStatement("SELECT projet.voirSesOffres(?);");
@@ -47,7 +50,7 @@ public class Entreprise {
         }
         int choix = 0;
         do{
-            System.out.println("1. Encoder une offre de stage");
+            System.out.println("\n1. Encoder une offre de stage");
             System.out.println("2. Voir mot-clés disponible");
             System.out.println("3. Ajouter un mot-clé");
             System.out.println("4. Voir ses offres");
@@ -162,7 +165,13 @@ public class Entreprise {
 
 
     private static void voirMotCle(){
-
+        try(ResultSet rs = voirMotCles.executeQuery()){
+            while(rs.next()){
+                System.out.println(rs.getString(1));
+            }
+        }catch (SQLException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private static void voirSesOffres(){
