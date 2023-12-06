@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0372aee3-6824-4f90-b2de-89e34f0cf07a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Java/ProjetSQL/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Java/ProjetSQL/src/Main.java" afterDir="false" />
-    </list>
+    <list default="true" id="0372aee3-6824-4f90-b2de-89e34f0cf07a" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +16,9 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
   <component name="ProjectId" id="2Ycqf394mT6tdGED4TSmRimX5eG" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -28,11 +29,13 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/20221035.VINCI/bloc2-q1-projet-sql",
+    "last_opened_file_path": "C:/Users/remme/Documents/Cours He Vinci/BLOC 2/BD2/bloc2-q1-projet-sql/Java/Professeur",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)"
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RunManager">
@@ -58,6 +61,7 @@
       <option name="presentableId" value="Default" />
       <updated>1700835315109</updated>
       <workItem from="1700835318012" duration="1368000" />
+      <workItem from="1701856850258" duration="254000" />
     </task>
     <servers />
   </component>
