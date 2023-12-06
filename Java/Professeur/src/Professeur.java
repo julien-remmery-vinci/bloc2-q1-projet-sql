@@ -4,12 +4,10 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Professeur {
-    private String email;
-    private String mdp;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static String url= "jdbc:postgresql://localhost:5432/postgres";
+
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
-//    static PreparedStatement login;
     static PreparedStatement encoderEtudiant;
     static PreparedStatement encoderEntreprise;
     static PreparedStatement encoderMotCle;
@@ -22,11 +20,10 @@ public class Professeur {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-//            login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
             encoderEtudiant = conn.prepareStatement("SELECT projet.encoderEtudiant(?, ?, ?, ?, ?);");
             encoderEntreprise = conn.prepareStatement("SELECT projet.encoderEntreprise(?, ?, ?, ?, ?);");
             encoderMotCle = conn.prepareStatement("SELECT projet.encoderMotcle(?);");
@@ -43,10 +40,6 @@ public class Professeur {
         System.out.println("----------------------");
         System.out.println("Application professeur");
         System.out.println("----------------------");
-//        while(!login()) {
-//            System.out.println("Identifiant incorrect");
-//            login();
-//        }
         int choix = 0;
         do{
             System.out.println("1. Encoder un étudiant");
@@ -87,25 +80,12 @@ public class Professeur {
                     break;
             }
         }while(choix >= 1 && choix <= 8);
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
-//    private boolean login(){
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.print("email: ");
-//        String email = scanner.next();
-//        System.out.print("mot de passe: ");
-//        String mdp = scanner.next();
-//        try {
-//            login.setString(1, email);
-//            try(ResultSet rs = login.executeQuery()){
-//                while (rs.next()) {
-//                    if(BCrypt.checkpw(mdp, rs.getString(2))) return true;
-//                }
-//            }
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return false;
-//    }
     private static void encoderEtudiant(){
         System.out.print("nom: ");
         String nom = scanner.next();
@@ -124,7 +104,7 @@ public class Professeur {
             encoderEtudiant.setString(3, email);
             encoderEtudiant.setString(4, semestre);
             encoderEtudiant.setString(5, mdpAInserer);
-            int result = encoderEtudiant.executeUpdate();
+            encoderEtudiant.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -164,8 +144,8 @@ public class Professeur {
         System.out.print("mot: ");
         String mot = scanner.next();
         try {
-            encoderEtudiant.setString(1, mot);
-            encoderMotCle.executeUpdate();
+            encoderMotCle.setString(1, mot);
+            encoderMotCle.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -175,14 +155,22 @@ public class Professeur {
         }
     }
     private static void voirOffresNonValidees(){
-
+        try(ResultSet rs = voirOffresNonValidees.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void validerOffre(){
         System.out.print("code offre: ");
         String code = scanner.next();
         try {
             validerOffre.setString(1, code);
-            int result = validerOffre.executeUpdate();
+            validerOffre.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
         } catch (SQLException se) {
@@ -192,15 +180,33 @@ public class Professeur {
         }
     }
     private static void voirOffresValidees(){
-
+        try(ResultSet rs = voirOffresValidees.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void voirEtudiantSansStage(){
-
+        try(ResultSet rs = voirEtudiantSansStage.executeQuery()) {
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4) +"\t"+ rs.getString(5)
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     private static void voirOffresAttribuees(){
         try(ResultSet rs = voirOffresAttribuees.executeQuery()) {
             while(rs.next()){
-                System.out.println();
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
