@@ -25,10 +25,10 @@ public class Etudiant {
             }
             login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
             afficherOffresStage = conn.prepareStatement("SELECT projet.afficherOffresStage(?);");
-            rechercheStageParMotCle = conn.prepareStatement("SELECT projet.encoderEntreprise(?, ?);");
-            poserCandidature = conn.prepareStatement("SELECT projet.encoderMotcle(?,?,?);");
+            rechercheStageParMotCle = conn.prepareStatement("SELECT projet.rechercheStageParMotCle(?, ?);");
+            poserCandidature = conn.prepareStatement("SELECT projet.poserCandidature(?,?,?);");
             voirOffresStageEtudiant = conn.prepareStatement("SELECT code_offre_stage, nom, etat, id_etudiant FROM projet.voirOffresStageEtudiant;");
-            annulerCandidature = conn.prepareStatement("SELECT projet.valideroffre(?);");
+            annulerCandidature = conn.prepareStatement("SELECT projet.annulerCandidature(?);");
              } catch (SQLException e) {
             throw new RuntimeException(e);
         }
