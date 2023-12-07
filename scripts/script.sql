@@ -621,3 +621,7 @@ SELECT projet.poserCandidature('WWF1', 'Je veux faire un stage chez vous', 1);
 --SELECT projet.poserCandidature('WWF1','Je veux faire un stage chez vous',2); -- DEJA POSTULE
 --ENTREPRISE 6
 SELECT projet.selectionnerEtudiant('W2G1', 'julien.remmery@student.vinci.be', 'W2G');
+
+GRANT CONNECT ON DATABASE dbnadirahdid to gerardlicaj, nadirahdid;
+GRANT USAGE ON SCHEMA projet TO gerardlicaj;
+GRANT SELECT ON dbnadirahdid.projet.entreprises to gerardlicaj;
