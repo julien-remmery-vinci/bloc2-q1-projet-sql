@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Etudiant {
     private String email;
     private String mdp;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbgerardlicaj";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
