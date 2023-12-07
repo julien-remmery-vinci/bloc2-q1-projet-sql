@@ -4,9 +4,9 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Professeur {
-//    static String url= "jdbc:postgresql://localhost:5432/postgres";
-    //    static String url= "jdbc:postgresql://localhost:5432/postgres";
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    //static String url= "jdbc:postgresql://localhost:5432/postgres";
+    static String url= "jdbc:postgresql://localhost:5432/projet_sql";
+    //static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
 
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
@@ -22,8 +22,9 @@ public class Professeur {
     static{
         try {
             try {
-//               JULIEN conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
-                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+//              JULIEN conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
+                //conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+                conn = DriverManager.getConnection(url,"postgres","nadir123");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
