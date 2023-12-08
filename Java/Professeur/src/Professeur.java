@@ -5,9 +5,7 @@ import java.util.Scanner;
 
 public class Professeur {
 
-//    static String url= "jdbc:postgresql://localhost:5432/postgres";
-        static String url= "jdbc:postgresql://localhost:5432/postgres";
-//    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
 
 
     static Connection conn=null;
@@ -25,8 +23,7 @@ public class Professeur {
         try {
             try {
 
-                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
-//                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -49,7 +46,7 @@ public class Professeur {
         System.out.println("----------------------");
         int choix = 0;
         do{
-            System.out.println("1. Encoder un étudiant");
+            System.out.println("\n1. Encoder un étudiant");
             System.out.println("2. Encoder une entreprise");
             System.out.println("3. Encoder un mot-clé que les entreprises pourront utiliser pour décrire leur stage");
             System.out.println("4. Voir les offres de stage dans l’état « non validée »");
@@ -57,7 +54,7 @@ public class Professeur {
             System.out.println("6. Voir les offres de stage dans l’état « validée »");
             System.out.println("7. Voir les étudiants qui n’ont pas de stage");
             System.out.println("8. Voir les offres de stage dans l’état « attribuée »");
-            choix = scanner.nextInt();
+            choix = Integer.parseInt(scanner.nextLine());
             switch(choix){
                 case 1:
                     encoderEtudiant();
@@ -95,15 +92,15 @@ public class Professeur {
     }
     private static void encoderEtudiant(){
         System.out.print("nom: ");
-        String nom = scanner.next();
+        String nom = scanner.nextLine();
         System.out.print("prenom: ");
-        String prenom = scanner.next();
+        String prenom = scanner.nextLine();
         System.out.print("email: ");
-        String email = scanner.next();
+        String email = scanner.nextLine();
         System.out.print("semestre: ");
-        String semestre = scanner.next();
+        String semestre = scanner.nextLine();
         System.out.print("mot de passe: ");
-        String mdp = scanner.next();
+        String mdp = scanner.nextLine();
         String mdpAInserer = BCrypt.hashpw(mdp, BCrypt.gensalt(10));
         try {
             encoderEtudiant.setString(1, nom);
@@ -122,15 +119,15 @@ public class Professeur {
     }
     private static void encoderEntreprise(){
         System.out.print("nom: ");
-        String nom = scanner.next();
+        String nom = scanner.nextLine();
         System.out.print("adresse: ");
-        String adresse = scanner.next();
+        String adresse = scanner.nextLine();
         System.out.print("email: ");
-        String email = scanner.next();
+        String email = scanner.nextLine();
         System.out.print("identifiant: ");
-        String identifiant = scanner.next();
+        String identifiant = scanner.nextLine();
         System.out.print("mot de passe: ");
-        String mdp = scanner.next();
+        String mdp = scanner.nextLine();
         String mdpAInserer = BCrypt.hashpw(mdp, BCrypt.gensalt(10));
         try {
             encoderEntreprise.setString(1, nom);
@@ -149,7 +146,7 @@ public class Professeur {
     }
     private static void encoderMotCle(){
         System.out.print("mot: ");
-        String mot = scanner.next();
+        String mot = scanner.nextLine();
         try {
             encoderMotCle.setString(1, mot);
             encoderMotCle.execute();
@@ -174,7 +171,7 @@ public class Professeur {
     }
     private static void validerOffre(){
         System.out.print("code offre: ");
-        String code = scanner.next();
+        String code = scanner.nextLine();
         try {
             validerOffre.setString(1, code);
             validerOffre.execute();

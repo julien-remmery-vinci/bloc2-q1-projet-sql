@@ -4,12 +4,12 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Etudiant {
-    private String email;
-    private String mdp;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static private String semestreEtudiant;
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
+    static PreparedStatement getInfoEtudiant;
     static PreparedStatement afficherOffresStage;
     static PreparedStatement rechercheStageParMotCle;
     static PreparedStatement poserCandidature;
@@ -19,11 +19,12 @@ public class Etudiant {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            login = conn.prepareStatement("SELECT email, mdp FROM projet.etudiants WHERE email = ?");
+            login = conn.prepareStatement("SELECT mdp FROM projet.etudiants WHERE email = ?");
+            getInfoEtudiant = conn.prepareStatement("SELECT semestre FROM projet.etudiants WHERE email = ?");
             afficherOffresStage = conn.prepareStatement("SELECT projet.afficherOffresStage(?);");
             rechercheStageParMotCle = conn.prepareStatement("SELECT projet.rechercheStageParMotCle(?, ?);");
             poserCandidature = conn.prepareStatement("SELECT projet.poserCandidature(?,?,?);");
@@ -80,7 +81,15 @@ public class Etudiant {
             login.setString(1, email);
             try(ResultSet rs = login.executeQuery()){
                 while (rs.next()) {
-                    if(BCrypt.checkpw(mdp, rs.getString(2))) return true;
+                    if(BCrypt.checkpw(mdp, rs.getString(1))) {
+                        getInfoEtudiant.setString(1, email);
+                        try(ResultSet rs1 = getInfoEtudiant.executeQuery()){
+                            while (rs1.next()){
+                                semestreEtudiant = rs1.getString(1);
+                            }
+                        }
+                        return true;
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -89,10 +98,8 @@ public class Etudiant {
         return false;
     }
     private static void afficherOffresStage(){
-        System.out.print("semestre: ");
-        String semestre = scanner.next();
         try {
-            afficherOffresStage.setString(1, semestre);
+            afficherOffresStage.setString(1, semestreEtudiant);
             try(ResultSet rs = afficherOffresStage.executeQuery()){
                 while (rs.next()) {
                     System.out.println(
