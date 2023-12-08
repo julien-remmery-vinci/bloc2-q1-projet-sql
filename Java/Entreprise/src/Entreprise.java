@@ -6,8 +6,7 @@ import java.util.Scanner;
 public class Entreprise {
 
     private static String idEntreprise;
-    static String url= "jdbc:postgresql://localhost:5432/projet_sql";
-    //static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -23,8 +22,7 @@ public class Entreprise {
     static{
         try {
             try {
-                //conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
-                conn = DriverManager.getConnection(url,"postgres","nadir123");
+                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -57,7 +55,7 @@ public class Entreprise {
             System.out.println("5. Voir candidature pour une offre de stage");
             System.out.println("6. Selectionner un étudiant por une de ses offres de stages");
             System.out.println("7. Annuler une offre de stage");
-            choix = scanner.nextInt();
+            choix = Integer.parseInt(scanner.nextLine());
             switch(choix){
                 case 1:
                     encoderOffreDeStage();
@@ -88,9 +86,9 @@ public class Entreprise {
     private boolean login(){
         Scanner scanner = new Scanner(System.in);
         System.out.print("identifiant: ");
-        idEntreprise = scanner.next();
+        idEntreprise = scanner.nextLine();
         System.out.print("mot de passe: ");
-        String mdp = scanner.next();
+        String mdp = scanner.nextLine();
         try {
             login.setString(1, idEntreprise);
             try(ResultSet rs = login.executeQuery()){
@@ -107,9 +105,9 @@ public class Entreprise {
     }
     private static void encoderOffreDeStage(){
         System.out.print("semestre: ");
-        String semestre = scanner.next();
+        String semestre = scanner.nextLine();
         System.out.print("description: ");
-        String description = scanner.next();
+        String description = scanner.nextLine();
 
         try {
             encoderOffreDeStage.setString(2, semestre);
@@ -126,9 +124,9 @@ public class Entreprise {
     }
     private static void ajouterMotCleOffre(){
         System.out.print("mot clé: ");
-        String motCle = scanner.next();
+        String motCle = scanner.nextLine();
         System.out.print("codeOffre: ");
-        String codeOffre = scanner.next();
+        String codeOffre = scanner.nextLine();
         try {
             ajouterMotCleOffre.setString(1, motCle);
             ajouterMotCleOffre.setString(2, codeOffre);
@@ -176,7 +174,7 @@ public class Entreprise {
     }
     private static void voirCandidatures(){
         System.out.print("code offre: ");
-        String code = scanner.next();
+        String code = scanner.nextLine();
 
         try {
             voirCandidatures.setString(1, code);
@@ -199,7 +197,22 @@ public class Entreprise {
         }
     }
     private static void selectionnerEtudiant(){
-
+        System.out.print("code offre: ");
+        String codeOffre = scanner.nextLine();
+        System.out.print("email étudiant: ");
+        String email = scanner.nextLine();
+        try {
+            ajouterMotCleOffre.setString(1, codeOffre);
+            ajouterMotCleOffre.setString(2, email);
+            ajouterMotCleOffre.setString(2, idEntreprise);
+            ajouterMotCleOffre.execute();
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de l’insertion !");
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 
 
