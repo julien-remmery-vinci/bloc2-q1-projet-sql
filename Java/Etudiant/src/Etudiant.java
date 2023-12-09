@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Etudiant {
     static private String semestreEtudiant;
     static private int idEtudiant;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
+    static String url= "jdbc:postgresql://localhost:5432/postgres";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -20,7 +20,7 @@ public class Etudiant {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
+                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }

@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 public class Professeur {
 
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
+    static String url= "jdbc:postgresql://localhost:5432/postgres";
 
 
     static Connection conn=null;
@@ -23,7 +23,7 @@ public class Professeur {
         try {
             try {
 
-                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
+                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
