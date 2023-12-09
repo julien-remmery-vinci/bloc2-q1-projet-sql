@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 public class Etudiant {
     static private String semestreEtudiant;
+    static private int idEtudiant;
     static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
@@ -24,11 +25,11 @@ public class Etudiant {
                 throw new RuntimeException(e);
             }
             login = conn.prepareStatement("SELECT mdp FROM projet.etudiants WHERE email = ?");
-            getInfoEtudiant = conn.prepareStatement("SELECT semestre FROM projet.etudiants WHERE email = ?");
-            afficherOffresStage = conn.prepareStatement("SELECT projet.afficherOffresStage(?);");
-            rechercheStageParMotCle = conn.prepareStatement("SELECT projet.rechercheStageParMotCle(?, ?);");
+            getInfoEtudiant = conn.prepareStatement("SELECT id_etudiant, semestre FROM projet.etudiants WHERE email = ?");
+            afficherOffresStage = conn.prepareStatement("SELECT * FROM projet.afficherOffresStage(?) AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));");
+            rechercheStageParMotCle = conn.prepareStatement("SELECT * FROM projet.rechercheStageParMotCle(?, ?) AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));");
             poserCandidature = conn.prepareStatement("SELECT projet.poserCandidature(?,?,?);");
-            voirOffresStageEtudiant = conn.prepareStatement("SELECT code_offre_stage, nom, etat, id_etudiant FROM projet.voirOffresStageEtudiant;");
+            voirOffresStageEtudiant = conn.prepareStatement("SELECT code_offre_stage, nom, etat, id_etudiant FROM projet.voirOffresStageEtudiant WHERE id_etudiant = ?;");
             annulerCandidature = conn.prepareStatement("SELECT projet.annulerCandidature(?);");
              } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -85,7 +86,8 @@ public class Etudiant {
                         getInfoEtudiant.setString(1, email);
                         try(ResultSet rs1 = getInfoEtudiant.executeQuery()){
                             while (rs1.next()){
-                                semestreEtudiant = rs1.getString(1);
+                                idEtudiant = rs1.getInt(1);
+                                semestreEtudiant = rs1.getString(2);
                             }
                         }
                         return true;
@@ -114,11 +116,9 @@ public class Etudiant {
     private static void rechercheStageParMotCle(){
         System.out.println("mot: ");
         String mot = scanner.next();
-        System.out.print("semestre: ");
-        String semestre = scanner.next();
         try {
             rechercheStageParMotCle.setString(1, mot);
-            rechercheStageParMotCle.setString(2, semestre);
+            rechercheStageParMotCle.setString(2, semestreEtudiant);
             try(ResultSet rs = rechercheStageParMotCle.executeQuery()){
                 while (rs.next()) {
                     System.out.println(
@@ -134,12 +134,10 @@ public class Etudiant {
         String code = scanner.next();
         System.out.print("motivation: ");
         String motivation = scanner.next();
-        System.out.print("id_etudiant: ");
-        String id_etudiant = scanner.next();
         try {
             poserCandidature.setString(1, code);
             poserCandidature.setString(2, motivation);
-            poserCandidature.setString(3, id_etudiant);
+            poserCandidature.setInt(3, idEtudiant);
             poserCandidature.execute();
         } catch (PSQLException pe) {
             pe.printStackTrace();
@@ -151,6 +149,11 @@ public class Etudiant {
     }
 
     private static void voirOffresStageEtudiant(){
+        try {
+            voirOffresStageEtudiant.setInt(1, idEtudiant);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         try(ResultSet rs = voirOffresStageEtudiant.executeQuery()) {
             while(rs.next()){
                 System.out.println(
