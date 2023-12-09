@@ -50,7 +50,7 @@ public class Etudiant {
             System.out.println("3. Poser sa candidature.");
             System.out.println("4. Voir les offres de stage pour lesquels l’étudiant a posé sa candidature");
             System.out.println("5. Annuler une candidature en précisant le code de l’offre de stage");
-            choix = scanner.nextInt();
+            choix = Integer.parseInt(scanner.nextLine());
             switch(choix){
                 case 1:
                     afficherOffresStage();
@@ -75,9 +75,9 @@ public class Etudiant {
     private boolean login(){
         Scanner scanner = new Scanner(System.in);
         System.out.print("email: ");
-        String email = scanner.next();
+        String email = scanner.nextLine();
         System.out.print("mot de passe: ");
-        String mdp = scanner.next();
+        String mdp = scanner.nextLine();
         try {
             login.setString(1, email);
             try(ResultSet rs = login.executeQuery()){
@@ -115,7 +115,7 @@ public class Etudiant {
     }
     private static void rechercheStageParMotCle(){
         System.out.println("mot: ");
-        String mot = scanner.next();
+        String mot = scanner.nextLine();
         try {
             rechercheStageParMotCle.setString(1, mot);
             rechercheStageParMotCle.setString(2, semestreEtudiant);
@@ -131,9 +131,9 @@ public class Etudiant {
     }
     private static void poserCandidature(){
         System.out.print("code stage: ");
-        String code = scanner.next();
+        String code = scanner.nextLine();
         System.out.print("motivation: ");
-        String motivation = scanner.next();
+        String motivation = scanner.nextLine();
         try {
             poserCandidature.setString(1, code);
             poserCandidature.setString(2, motivation);
@@ -167,7 +167,7 @@ public class Etudiant {
 
     private static void annulerCandidature(){
         System.out.print("code offre: ");
-        String code = scanner.next();
+        String code = scanner.nextLine();
         try {
             annulerCandidature.setString(1, code);
             annulerCandidature.execute();
