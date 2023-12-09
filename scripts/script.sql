@@ -8,8 +8,7 @@ CREATE TABLE projet.etudiants
     prenom                  VARCHAR(50)  NOT NULL CHECK ( prenom != '' ),
     email                   VARCHAR(100) NOT NULL UNIQUE CHECK ( email != '' AND email LIKE '%@student.vinci.be' ),
     semestre                VARCHAR(2) CHECK ( semestre IN ('Q1', 'Q2') ),
-    mdp                     VARCHAR(100) NOT NULL,
-    nb_candidatures_attente INTEGER      NOT NULL DEFAULT 0
+    mdp                     VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE projet.entreprises
@@ -36,7 +35,6 @@ CREATE TABLE projet.offres_de_stages
     description             VARCHAR(100)                                                      NOT NULL,
     identifiant_entreprise  VARCHAR(3) REFERENCES projet.entreprises (identifiant_entreprise) NOT NULL,
     code_offre_stage        VARCHAR(20)                                                       NOT NULL UNIQUE,
-    nb_candidatures_attente INTEGER                                                           NOT NULL DEFAULT 0,
     id_etudiant             INTEGER REFERENCES projet.etudiants (id_etudiant)                 NULL
 );
 
@@ -262,11 +260,13 @@ WHERE offre.etat = 'validée'
 
 --PROFESSEUR 7. Voir les étudiants qui n’ont pas de stage (pas de candidature à l’état « acceptée »).
 CREATE OR REPLACE VIEW projet.voirEtudiantsSansStage (nom, prenom, email, semestre, nb_candidatures_attente) AS
-SELECT e.nom, e.prenom, e.email, e.semestre, e.nb_candidatures_attente
-FROM projet.etudiants e
-WHERE NOT EXISTS(SELECT id_offre_stage
+SELECT e.nom, e.prenom, e.email, e.semestre, COUNT(c.id_offre_stage)::INTEGER
+FROM projet.etudiants e, projet.candidatures c
+WHERE c.id_etudiant = e.id_etudiant
+    AND NOT EXISTS(SELECT id_offre_stage
                  FROM projet.candidatures c
-                 WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée');
+                 WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée')
+group by e.nom, e.prenom, e.email, e.semestre;
 
 --8. Voir les offres de stage dans l’état « attribuée »
 CREATE OR REPLACE FUNCTION projet.afficherOffresAttribuees() RETURNS SETOF RECORD AS
@@ -335,7 +335,7 @@ DECLARE
     offre  RECORD;
     sortie RECORD;
 BEGIN
-    FOR offre IN SELECT code_offre_stage, description, semestre, etat, id_offre_stage, nb_candidatures_attente
+    FOR offre IN SELECT code_offre_stage, description, semestre, etat, id_offre_stage
                  FROM projet.offres_de_stages os
                  WHERE os.identifiant_entreprise = identifiantEntreprise
                  ORDER BY code_offre_stage
@@ -345,12 +345,15 @@ BEGIN
                        offre.description,
                        offre.semestre,
                        offre.etat,
-                       os.nb_candidatures_attente,
+                       COUNT(c.id_offre_stage)::INTEGER,
                        concat(e.nom, ' ', e.prenom)::VARCHAR(100)
                 FROM projet.etudiants e,
-                     projet.offres_de_stages os
+                     projet.offres_de_stages os,
+                     projet.candidatures c
                 WHERE offre.id_offre_stage = os.id_offre_stage
                   AND os.id_etudiant = e.id_etudiant
+                  AND c.id_offre_stage = os.id_offre_stage
+                group by offre.code_offre_stage, offre.description, offre.semestre, offre.etat, e.nom, e.prenom
                 INTO sortie;
                 RETURN NEXT sortie;
             ELSE
@@ -358,8 +361,11 @@ BEGIN
                        offre.description,
                        offre.semestre,
                        offre.etat,
-                       offre.nb_candidatures_attente,
+                       COUNT(c.id_offre_stage)::INTEGER,
                        'pas attribuée'::VARCHAR(100)
+                FROM projet.candidatures c
+                WHERE c.id_offre_stage = offre.id_offre_stage
+                group by offre.code_offre_stage, offre.description, offre.semestre, offre.etat
                 INTO sortie;
                 RETURN NEXT sortie;
             end if;
@@ -662,12 +668,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---SELECT projet.encoderEtudiant('De', 'Jean', 'j.d@student.vinci.be', 'Q2', 'test');
---SELECT projet.encoderEtudiant('Du', 'Marc', 'm.d@student.vinci.be', 'Q1', 'test');
+-- SELECT projet.encoderEtudiant('De', 'Jean', 'j.d@student.vinci.be', 'Q2', 'test');
+-- SELECT projet.encoderEtudiant('Du', 'Marc', 'm.d@student.vinci.be', 'Q1', 'test');
 SELECT projet.encoderMotcle('Java');
 SELECT projet.encoderMotcle('Web');
 SELECT projet.encoderMotcle('Python');
---SELECT projet.encoderEntreprise('VINCI', 'Rue du test, 1', 'vinci@vinci.be', 'VIN', 'test');
+-- SELECT projet.encoderEntreprise('VINCI', 'Rue du test, 1', 'vinci@vinci.be', 'VIN', 'test');
 SELECT projet.encoderOffreDeStage('stage SAP', 'Q2', 'VIN');
 SELECT projet.encoderOffreDeStage('stage BI', 'Q2', 'VIN');
 SELECT projet.encoderOffreDeStage('stage Unity', 'Q2', 'VIN');
@@ -680,7 +686,7 @@ SELECT projet.ajouterMotCleOffre('Java', 'VIN3', 'VIN');
 SELECT projet.ajouterMotCleOffre('Java', 'VIN5', 'VIN');
 SELECT projet.poserCandidature('VIN4', 'Je veux faire un stage chez vous', 1);
 SELECT projet.poserCandidature('VIN5', 'Je veux faire un stage chez vous', 2);
---SELECT projet.encoderEntreprise('ULB', 'Rue du test, 1', 'ulb@ulb.be', 'ULB', 'test');
+-- SELECT projet.encoderEntreprise('ULB', 'Rue du test, 1', 'ulb@ulb.be', 'ULB', 'test');
 SELECT projet.encoderOffreDeStage('stage javascript', 'Q2', 'ULB');
 SELECT projet.valideroffre('ULB1');
 
