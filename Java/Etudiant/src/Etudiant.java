@@ -139,12 +139,8 @@ public class Etudiant {
             poserCandidature.setString(2, motivation);
             poserCandidature.setInt(3, idEtudiant);
             poserCandidature.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
 
@@ -171,12 +167,8 @@ public class Etudiant {
         try {
             annulerCandidature.setString(1, code);
             annulerCandidature.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de la requete !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
 }
 }

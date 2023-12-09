@@ -114,12 +114,8 @@ public class Entreprise {
             encoderOffreDeStage.setString(1, description);
             encoderOffreDeStage.setString(3, idEntreprise);
             encoderOffreDeStage.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void ajouterMotCleOffre(){
@@ -131,12 +127,8 @@ public class Entreprise {
             ajouterMotCleOffre.setString(1, motCle);
             ajouterMotCleOffre.setString(2, codeOffre);
             ajouterMotCleOffre.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
 
@@ -164,12 +156,8 @@ public class Entreprise {
                 throw new RuntimeException(e);
             }
 
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void voirCandidatures(){
@@ -189,7 +177,7 @@ public class Entreprise {
                     throw new RuntimeException(e);
                 }
         } catch (SQLException pe) {
-            pe.printStackTrace();
+            System.out.println(pe.getMessage());
         }
     }
     private static void selectionnerEtudiant(){
@@ -202,12 +190,8 @@ public class Entreprise {
             selectionnerEtudiant.setString(2, email);
             selectionnerEtudiant.setString(3, idEntreprise);
             selectionnerEtudiant.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
 
@@ -219,12 +203,8 @@ public class Entreprise {
             annulerOffre.setString(1, codeOffre);
             annulerOffre.setString(2, idEntreprise);
             annulerOffre.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
 }

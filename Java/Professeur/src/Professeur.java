@@ -109,12 +109,8 @@ public class Professeur {
             encoderEtudiant.setString(4, semestre);
             encoderEtudiant.setString(5, mdpAInserer);
             encoderEtudiant.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void encoderEntreprise(){
@@ -136,12 +132,8 @@ public class Professeur {
             encoderEntreprise.setString(4, identifiant);
             encoderEntreprise.setString(5, mdpAInserer);
             encoderEntreprise.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void encoderMotCle(){
@@ -150,12 +142,8 @@ public class Professeur {
         try {
             encoderMotCle.setString(1, mot);
             encoderMotCle.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de l’insertion !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void voirOffresNonValidees(){
@@ -175,12 +163,8 @@ public class Professeur {
         try {
             validerOffre.setString(1, code);
             validerOffre.execute();
-        } catch (PSQLException pe) {
-            pe.printStackTrace();
         } catch (SQLException se) {
-            System.out.println("Erreur lors de la requete !");
-            se.printStackTrace();
-            System.exit(1);
+            System.out.println(se.getMessage());
         }
     }
     private static void voirOffresValidees(){
