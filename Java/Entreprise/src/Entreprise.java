@@ -31,7 +31,7 @@ public class Entreprise {
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
             ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
             voirSesOffres = conn.prepareStatement("SELECT * FROM projet.voirSesOffres(?) AS (code_offre_stage VARCHAR(20), description VARCHAR(100), semestre VARCHAR(2), etat VARCHAR(11), nb_candidatures_attente INTEGER, attribution VARCHAR(100));");
-            voirCandidatures = conn.prepareStatement("SELECT * FROM projet.voirCandidatures(?) AS (etat VARCHAR(10), nom VARCHAR(50),prenom VARCHAR(50),email VARCHAR(100), motivation VARCHAR(100));");
+            voirCandidatures = conn.prepareStatement("SELECT * FROM projet.voirCandidatures(?, ?) AS (etat VARCHAR(10), nom VARCHAR(50),prenom VARCHAR(50),email VARCHAR(100), motivation VARCHAR(100));");
             selectionnerEtudiant = conn.prepareStatement("SELECT projet.selectionnerEtudiant(?, ?, ?);");
             annulerOffre = conn.prepareStatement("SELECT projet.annulerOffre(?,?);");
         } catch (SQLException e) {
@@ -166,6 +166,7 @@ public class Entreprise {
 
         try {
             voirCandidatures.setString(1, code);
+            voirCandidatures.setString(2, idEntreprise);
             voirCandidatures.execute();
             try(ResultSet rs = voirCandidatures.executeQuery()){
                     while(rs.next()){

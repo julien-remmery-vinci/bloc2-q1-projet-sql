@@ -30,7 +30,7 @@ public class Etudiant {
             rechercheStageParMotCle = conn.prepareStatement("SELECT * FROM projet.rechercheStageParMotCle(?, ?) AS (code_offre VARCHAR(20), nom_entreprise VARCHAR(50), adresse_entreprise VARCHAR(100), description_offre VARCHAR(100), mots_cles VARCHAR(60));");
             poserCandidature = conn.prepareStatement("SELECT projet.poserCandidature(?,?,?);");
             voirOffresStageEtudiant = conn.prepareStatement("SELECT code_offre_stage, nom, etat, id_etudiant FROM projet.voirOffresStageEtudiant WHERE id_etudiant = ?;");
-            annulerCandidature = conn.prepareStatement("SELECT projet.annulerCandidature(?);");
+            annulerCandidature = conn.prepareStatement("SELECT projet.annulerCandidature(?, ?);");
              } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -166,6 +166,7 @@ public class Etudiant {
         String code = scanner.next();
         try {
             annulerCandidature.setString(1, code);
+            annulerCandidature.setInt(2, idEtudiant);
             annulerCandidature.execute();
         } catch (SQLException se) {
             System.out.println(se.getMessage());
