@@ -45,7 +45,7 @@ public class Etudiant {
         }
         int choix = 0;
         do{
-            System.out.println("/n1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage");
+            System.out.println("\n1. Voir toutes les offres de stage dans l’état « validée » correspondant au semestre où l’étudiant fera son stage");
             System.out.println("2. Recherche d’une offre de stage par mot clé");
             System.out.println("3. Poser sa candidature.");
             System.out.println("4. Voir les offres de stage pour lesquels l’étudiant a posé sa candidature");
