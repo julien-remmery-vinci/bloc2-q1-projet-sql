@@ -83,7 +83,7 @@ CREATE TABLE projet.candidatures
 CREATE OR REPLACE FUNCTION projet.ajouterCodeOffre() RETURNS TRIGGER AS
 $$
 DECLARE
-    nb_offres INTEGER := 0;
+    nb_offres  INTEGER := 0;
     oldNbOffre INTEGER := 0;
 BEGIN
     IF EXISTS(SELECT o.id_offre_stage
@@ -264,14 +264,16 @@ WHERE offre.etat = 'validée'
 CREATE OR REPLACE VIEW projet.voirEtudiantsSansStage (nom, prenom, email, semestre, nb_candidatures_attente) AS
 SELECT e.nom, e.prenom, e.email, e.semestre, e.nb_candidatures_attente
 FROM projet.etudiants e
-WHERE NOT EXISTS(SELECT id_offre_stage FROM projet.candidatures c WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée');
+WHERE NOT EXISTS(SELECT id_offre_stage
+                 FROM projet.candidatures c
+                 WHERE c.id_etudiant = e.id_etudiant AND c.etat = 'acceptée');
 
 --8. Voir les offres de stage dans l’état « attribuée »
 CREATE OR REPLACE FUNCTION projet.afficherOffresAttribuees() RETURNS SETOF RECORD AS
 $$
 DECLARE
     codeOffre VARCHAR(20);
-    sortie RECORD;
+    sortie    RECORD;
 BEGIN
     FOR codeOffre IN SELECT code_offre_stage FROM projet.offres_de_stages os WHERE os.etat = 'attribuée'
         LOOP
@@ -305,7 +307,7 @@ CREATE OR REPLACE FUNCTION projet.ajouterMotCleOffre(_mot_cle VARCHAR(20), _code
 $$
 DECLARE
     idOffre INTEGER := 0;
-    idMot INTEGER := 0;
+    idMot   INTEGER := 0;
 BEGIN
     IF NOT EXISTS (SELECT id_offre_stage
                    FROM projet.offres_de_stages o
@@ -333,7 +335,10 @@ DECLARE
     offre  RECORD;
     sortie RECORD;
 BEGIN
-    FOR offre IN SELECT code_offre_stage, description, semestre, etat, id_offre_stage, nb_candidatures_attente FROM projet.offres_de_stages os WHERE os.identifiant_entreprise = identifiantEntreprise ORDER BY code_offre_stage
+    FOR offre IN SELECT code_offre_stage, description, semestre, etat, id_offre_stage, nb_candidatures_attente
+                 FROM projet.offres_de_stages os
+                 WHERE os.identifiant_entreprise = identifiantEntreprise
+                 ORDER BY code_offre_stage
         LOOP
             IF offre.etat = 'attribuée' THEN
                 SELECT offre.code_offre_stage,
@@ -350,13 +355,13 @@ BEGIN
                 RETURN NEXT sortie;
             ELSE
                 SELECT offre.code_offre_stage,
-                           offre.description,
-                           offre.semestre,
-                           offre.etat,
-                           offre.nb_candidatures_attente,
-                           'pas attribuée'::VARCHAR(100)
-                    INTO sortie;
-                    RETURN NEXT sortie;
+                       offre.description,
+                       offre.semestre,
+                       offre.etat,
+                       offre.nb_candidatures_attente,
+                       'pas attribuée'::VARCHAR(100)
+                INTO sortie;
+                RETURN NEXT sortie;
             end if;
         END LOOP;
     RETURN;
@@ -370,7 +375,11 @@ DECLARE
     candidature RECORD;
     sortie      RECORD;
 BEGIN
-    IF idEntreprise != (SELECT identifiant_entreprise FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre) THEN
+    IF idEntreprise !=
+       (SELECT identifiant_entreprise FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre) THEN
+        RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
+    end if;
+    IF NOT EXISTS(SELECT c.id_offre_stage FROM projet.offres_de_stages os, projet.candidatures c WHERE os.id_offre_stage = c.id_offre_stage AND code_offre_stage = codeOffre) THEN
         RAISE 'Il n''y a pas de candidatures pour cette offre ou vous n''avez pas d''offre ayant ce code';
     end if;
     FOR candidature IN SELECT c.etat, e.nom, e.prenom, e.email, c.motivations
@@ -397,7 +406,10 @@ DECLARE
     offre    RECORD;
     etudiant INTEGER := 0;
 BEGIN
-    SELECT id_offre_stage, identifiant_entreprise, semestre FROM projet.offres_de_stages WHERE code_offre_stage = codeOffre INTO offre;
+    SELECT id_offre_stage, identifiant_entreprise, semestre
+    FROM projet.offres_de_stages
+    WHERE code_offre_stage = codeOffre
+    INTO offre;
     SELECT id_etudiant FROM projet.etudiants WHERE email = emailEtudiant INTO etudiant;
     IF identifiantEntreprise !=
        (SELECT os.identifiant_entreprise FROM projet.offres_de_stages os WHERE os.code_offre_stage = codeOffre) THEN
@@ -470,7 +482,10 @@ DECLARE
     mot      VARCHAR(20);
     sep      VARCHAR;
 BEGIN
-    for offre IN SELECT code_offre_stage, description, identifiant_entreprise, id_offre_stage FROM projet.offres_de_stages os WHERE os.etat = 'validée' AND os.semestre = semestreEtudiant
+    for offre IN SELECT code_offre_stage, description, identifiant_entreprise, id_offre_stage
+                 FROM projet.offres_de_stages os
+                 WHERE os.etat = 'validée'
+                   AND os.semestre = semestreEtudiant
         LOOP
             for mot IN SELECT mot_cle
                        FROM projet.mots_cles m,
@@ -572,7 +587,8 @@ BEGIN
     END IF;
     IF EXISTS(SELECT id_offre_stage
               FROM projet.offres_de_stages
-              WHERE id_offre_stage = NEW.id_offre_stage AND etat = 'annulée') THEN
+              WHERE id_offre_stage = NEW.id_offre_stage
+                AND etat = 'annulée') THEN
         RAISE 'L''offre est dans l''etat annulée';
     end if;
     RETURN NEW;
@@ -618,7 +634,9 @@ $$
 DECLARE
 
 BEGIN
-    IF 'acceptée' = (SELECT etat FROM projet.candidatures WHERE id_offre_stage = NEW.id_offre_stage AND id_etudiant = NEW.id_etudiant)THEN
+    IF 'acceptée' = (SELECT etat
+                     FROM projet.candidatures
+                     WHERE id_offre_stage = NEW.id_offre_stage AND id_etudiant = NEW.id_etudiant) THEN
         RAISE 'l''offre a deja été acceptée';
     end if;
     IF NEW.etat = 'annulée' AND OLD.etat != 'en attente' THEN
