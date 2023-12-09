@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Etudiant {
     private String email;
     private String mdp;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbgerardlicaj";
+    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -95,7 +95,9 @@ public class Etudiant {
             afficherOffresStage.setString(1, semestre);
             try(ResultSet rs = afficherOffresStage.executeQuery()){
                 while (rs.next()) {
-                    System.out.println(rs.getString(1));
+                    System.out.println(
+                            rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                    );
                 }
             }
         } catch (SQLException e) {
@@ -112,7 +114,8 @@ public class Etudiant {
             rechercheStageParMotCle.setString(2, semestre);
             try(ResultSet rs = rechercheStageParMotCle.executeQuery()){
                 while (rs.next()) {
-                    System.out.println(rs.getString(1));
+                    System.out.println(
+                            rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4) + "\t"+ rs.getString(5));
                 }
             }
         } catch (SQLException e) {
@@ -143,7 +146,9 @@ public class Etudiant {
     private static void voirOffresStageEtudiant(){
         try(ResultSet rs = voirOffresStageEtudiant.executeQuery()) {
             while(rs.next()){
-                System.out.println(rs.getString(1));
+                System.out.println(
+                        rs.getString(1) + "\t"+ rs.getString(2) + "\t"+ rs.getString(3) + "\t"+ rs.getString(4)
+                );
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -153,6 +158,15 @@ public class Etudiant {
     private static void annulerCandidature(){
         System.out.print("code offre: ");
         String code = scanner.next();
-        
-    }
+        try {
+            annulerCandidature.setString(1, code);
+            annulerCandidature.execute();
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de la requete !");
+            se.printStackTrace();
+            System.exit(1);
+        }
+}
 }

@@ -6,8 +6,8 @@ import java.util.Scanner;
 public class Entreprise {
 
     private static String idEntreprise;
-//    static String url= "jdbc:postgresql://localhost:5432/postgres";
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
+    static String url= "jdbc:postgresql://localhost:5432/projet_sql";
+    //static String url= "jdbc:postgresql://172.24.2.6:5432/dbnadirahdid";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -23,12 +23,12 @@ public class Entreprise {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
-//                conn = DriverManager.getConnection(url,"postgres","nadir123");
+                //conn = DriverManager.getConnection(url,"nadirahdid","K51Y3WAJP");
+                conn = DriverManager.getConnection(url,"postgres","nadir123");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            login = conn.prepareStatement("SELECT mdp FROM projet.entreprises WHERE email = ?");
+            login = conn.prepareStatement("SELECT mdp FROM projet.entreprises WHERE identifiant_entreprise = ?;");
             voirMotCles = conn.prepareStatement("SELECT mc.mot_cle FROM projet.mots_cles mc;");
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
             ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
@@ -87,27 +87,15 @@ public class Entreprise {
     }
     private boolean login(){
         Scanner scanner = new Scanner(System.in);
-        System.out.print("email: ");
-        String email = scanner.next();
+        System.out.print("identifiant: ");
+        idEntreprise = scanner.next();
         System.out.print("mot de passe: ");
         String mdp = scanner.next();
         try {
-            login.setString(1, email);
+            login.setString(1, idEntreprise);
             try(ResultSet rs = login.executeQuery()){
                 while (rs.next()) {
                     if(BCrypt.checkpw(mdp, rs.getString(1))) {
-                        PreparedStatement getIdEntreprise;
-                        getIdEntreprise = conn.prepareStatement("SELECT identifiant_entreprise FROM projet.entreprises WHERE email = ?");
-                        getIdEntreprise.setString(1,email);
-                        try (ResultSet rs1 = getIdEntreprise.executeQuery()){
-                            while(rs1.next()){
-                                idEntreprise = rs1.getString(1);
-                                System.out.println(idEntreprise);
-                            }
-                        }catch (SQLException e){
-                            throw new RuntimeException(e);
-                        }
-
                         return true;
                     }
                 }
@@ -212,11 +200,23 @@ public class Entreprise {
     }
     private static void selectionnerEtudiant(){
 
-
     }
 
 
     private static void annulerOffre(){
-
+        System.out.print("codeOffre: ");
+        String codeOffre = scanner.next();
+        try {
+            ajouterMotCleOffre.setString(1, codeOffre);
+            ajouterMotCleOffre.execute();
+        } catch (PSQLException pe) {
+            pe.printStackTrace();
+        } catch (SQLException se) {
+            System.out.println("Erreur lors de l’insertion !");
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 }
+
+
