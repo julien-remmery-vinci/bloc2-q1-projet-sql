@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Entreprise {
 
     private static String idEntreprise;
-    static String url= "jdbc:postgresql://172.24.2.6:5432/dbjulienremmery";
+    static String url= "jdbc:postgresql://localhost:5432/postgres";
     static Connection conn=null;
     static Scanner scanner = new Scanner(System.in);
     static PreparedStatement login;
@@ -22,14 +22,14 @@ public class Entreprise {
     static{
         try {
             try {
-                conn = DriverManager.getConnection(url,"julienremmery","CZRMIPHXS");
+                conn = DriverManager.getConnection(url,"postgres","fvG78Dy%");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
             login = conn.prepareStatement("SELECT mdp FROM projet.entreprises WHERE identifiant_entreprise = ?;");
             voirMotCles = conn.prepareStatement("SELECT mc.mot_cle FROM projet.mots_cles mc;");
             encoderOffreDeStage = conn.prepareStatement("SELECT projet.encoderOffreDeStage(?, ?, ?);");
-            ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?);");
+            ajouterMotCleOffre = conn.prepareStatement("SELECT projet.ajouterMotCleOffre(?, ?, ?);");
             voirSesOffres = conn.prepareStatement("SELECT * FROM projet.voirSesOffres(?) AS (code_offre_stage VARCHAR(20), description VARCHAR(100), semestre VARCHAR(2), etat VARCHAR(11), nb_candidatures_attente INTEGER, attribution VARCHAR(100));");
             voirCandidatures = conn.prepareStatement("SELECT * FROM projet.voirCandidatures(?, ?) AS (etat VARCHAR(10), nom VARCHAR(50),prenom VARCHAR(50),email VARCHAR(100), motivation VARCHAR(100));");
             selectionnerEtudiant = conn.prepareStatement("SELECT projet.selectionnerEtudiant(?, ?, ?);");
@@ -126,6 +126,7 @@ public class Entreprise {
         try {
             ajouterMotCleOffre.setString(1, motCle);
             ajouterMotCleOffre.setString(2, codeOffre);
+            ajouterMotCleOffre.setString(3, idEntreprise);
             ajouterMotCleOffre.execute();
         } catch (SQLException se) {
             System.out.println(se.getMessage());
